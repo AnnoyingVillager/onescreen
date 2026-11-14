@@ -11,7 +11,7 @@ URL 以服务端 BlockEntity 为权威，并通过 Minecraft 自带的 BlockEnti
 
 URL 和其他设置的持久化同步本身不需要额外客户端 payload；GUI 提交修改时使用受验证的 `CustomPacketPayload`。
 
-屏幕编辑器本身需要使用受验证的 payload：服务端打开编辑界面时发送当前 URL、尺寸、距离、对齐、适配、循环、直播追帧和有效距离上限；客户端保存时提交同字段更新 payload。服务端仍执行权限、编辑距离、URL、数值范围和配置上限校验，再写回 BlockEntity。
+屏幕编辑器本身需要使用受验证的 payload：服务端打开编辑界面时发送当前 URL、尺寸、距离、对齐、适配、旋转、隐藏画框、循环、直播追帧和有效距离上限；客户端保存时提交同字段更新 payload。服务端仍执行权限、编辑距离、URL、数值范围和配置上限校验，再写回 BlockEntity。
 
 ## 修改流程
 
@@ -38,6 +38,8 @@ URL 和其他设置的持久化同步本身不需要额外客户端 payload；GU
   audiodistance <pos> <value>
   align <pos> <position>
   fitmode <pos> <mode>
+  rotation <pos> <degrees>
+  hideframe <pos> <true|false>
   volume <pos> <value>
   mute <pos> <true|false>
   loop <pos> <true|false>
@@ -145,3 +147,14 @@ return 1;
 - 非屏幕保存了错误 BlockEntity 时命令安全失败。
 - 广告 URL 或错误 URL 不会破坏方块数据。
 - 服务器日志不泄露敏感参数。
+
+## 0.1.1 手动刷新 payload
+
+`ScreenReloadPayload` 只携带方块坐标。服务端收到后必须依次验证：
+
+1. 玩家具有 gamemaster 权限。
+2. 坐标处存在 `ScreenBlockEntity`。
+3. 玩家仍在编辑器允许的距离内。
+4. 屏幕已保存非空 URL。
+
+验证通过后调用 `screen.reload()`，递增 `loadRevision` 并同步 BlockEntity。客户端媒体协调器观察到修订变化后关闭旧会话并重建播放器。刷新操作不在客户端直接创建播放器，也不能绕过 URL 或权限校验。

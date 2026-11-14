@@ -73,9 +73,18 @@
   "onescreen.command.success.muted": "屏幕 %s 静音：%s",
   "onescreen.command.success.loop": "屏幕 %s 循环：%s",
   "onescreen.command.success.reload": "屏幕 %s 已请求重新加载（修订 %s）",
-  "onescreen.command.info": "屏幕 %s\nURL：%s\n尺寸：%s x %s\n渲染距离：%s，声音传播距离：%s\n画面位置：%s\n画面适应：%s\n音量：%s，静音：%s，循环：%s\n暂停/配置后刷新直播：%s\n加载修订：%s",
+  "onescreen.command.info": "屏幕 %s\nURL：%s\n尺寸：%s x %s\n渲染距离：%s，声音传播距离：%s\n画面位置：%s\n画面适应：%s，旋转：%s°，隐藏画框材质：%s\n音量：%s，静音：%s，循环：%s\n暂停/配置后刷新直播：%s\n加载修订：%s",
   "onescreen.command.info.debug": "屏幕调试材质：%s",
   "onescreen.command.success.debug": "屏幕调试材质已设为：%s",
   "onescreen.command.debug.on": "开启",
-  "onescreen.command.debug.off": "关闭"
+  "onescreen.command.debug.off": "关闭",
+  "onescreen.editor.rotation": "旋转角度（°）",
+  "onescreen.editor.hide_frame": "隐藏画框材质",
+  "onescreen.editor.hide_frame.tooltip": "隐藏静态屏幕画框模型，同时保留媒体画面、点击区域和右键编辑功能。默认不勾选。",
+  "onescreen.editor.control.refresh": "手动刷新媒体",
+  "onescreen.editor.refresh.requested": "已请求刷新，正在重新连接此媒体 URL…",
+  "onescreen.editor.success.refreshed": "屏幕 %s 已刷新（加载修订 %s）。",
+  "onescreen.command.error.invalid_rotation": "屏幕旋转角度必须在 %s 到 %s 度之间。",
+  "onescreen.command.success.rotation": "屏幕 %s 的旋转角度已设为 %s°",
+  "onescreen.command.success.hideframe": "屏幕 %s 隐藏画框材质：%s"
 }

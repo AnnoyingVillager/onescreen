@@ -2,7 +2,7 @@
 
 ## 版本规则
 
-项目使用语义化版本，当前发布版本为 `0.1.0`。
+项目使用语义化版本，当前发布版本为 `0.1.1`。
 
 发布前需要同步修改：
 
@@ -36,9 +36,9 @@ build/libs/onescreen-<version>-sources.jar
 创建工作流：
 
 ```bash
-git tag -a v0.1.0 -m "OneScreen 0.1.0"
+git tag -a v0.1.1 -m "OneScreen 0.1.1"
 git push origin main
-git push origin v0.1.0
+git push origin v0.1.1
 ```
 
 标签版本必须与 `gradle.properties` 完全一致；不一致时发布工作流会失败。
@@ -46,12 +46,12 @@ git push origin v0.1.0
 ## 发布检查
 
 - [ ] 主分支 CI 通过。
-- [ ] OpenGL 与 Vulkan 的实机冒烟测试完成。
-- [ ] WATERMeDIA 双版本冒烟测试通过。
-- [ ] LICENSE、README、CHANGELOG 和发布说明已更新。
-- [ ] 仓库中没有本地日志、世界存档、令牌或绝对路径。
+- [x] OpenGL 与 Vulkan 的实机冒烟测试完成。
+- [x] WATERMeDIA 双版本冒烟测试通过。
+- [x] LICENSE、README、CHANGELOG 和发布说明已更新。
+- [x] 仓库中没有本地日志、世界存档、令牌或绝对路径。
 - [ ] Release 同时包含主 JAR、源码 JAR 和 SHA-256 文件。
-- [ ] 已知限制在 Release 页面明确列出。
+- [x] 已知限制在 Release 页面明确列出。
 
 ## 密钥与权限
 

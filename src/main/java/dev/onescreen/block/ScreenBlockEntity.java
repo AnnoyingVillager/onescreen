@@ -53,6 +53,7 @@ public final class ScreenBlockEntity extends BlockEntity {
 		}
 
 		this.settings = nextSettings;
+		this.applyHiddenState(nextSettings.hideFrame());
 		this.setChanged();
 		this.syncToClients();
 	}
@@ -81,6 +82,14 @@ public final class ScreenBlockEntity extends BlockEntity {
 		this.setSettings(this.settings.withFitMode(fitMode));
 	}
 
+	public void setRotationDegrees(final float rotationDegrees) {
+		this.setSettings(this.settings.withRotationDegrees(rotationDegrees));
+	}
+
+	public void setHideFrame(final boolean hideFrame) {
+		this.setSettings(this.settings.withHideFrame(hideFrame));
+	}
+
 	public void setVolume(final float volume) {
 		this.setSettings(this.settings.withVolume(volume));
 	}
@@ -104,6 +113,16 @@ public final class ScreenBlockEntity extends BlockEntity {
 		return this.loadRevision;
 	}
 
+	private void applyHiddenState(final boolean hidden) {
+		if (this.level == null || this.level.isClientSide()) {
+			return;
+		}
+		BlockState state = this.getBlockState();
+		if (state.hasProperty(ScreenBlock.HIDDEN) && state.getValue(ScreenBlock.HIDDEN) != hidden) {
+			this.level.setBlock(this.worldPosition, state.setValue(ScreenBlock.HIDDEN, hidden), Block.UPDATE_CLIENTS);
+		}
+	}
+
 	private void syncToClients() {
 		if (this.level != null && !this.level.isClientSide()) {
 			BlockState state = this.getBlockState();
@@ -121,6 +140,8 @@ public final class ScreenBlockEntity extends BlockEntity {
 		output.putFloat("audioDistance", this.settings.audioDistance());
 		output.putString("alignment", this.settings.alignment().name());
 		output.putString("fitMode", this.settings.fitMode().name());
+		output.putFloat("rotationDegrees", this.settings.rotationDegrees());
+		output.putBoolean("hideFrame", this.settings.hideFrame());
 		output.putFloat("volume", this.settings.volume());
 		output.putBoolean("muted", this.settings.muted());
 		output.putBoolean("loop", this.settings.loop());
@@ -143,6 +164,8 @@ public final class ScreenBlockEntity extends BlockEntity {
 			input.getFloatOr("audioDistance", ScreenSettings.DEFAULT.audioDistance()),
 			alignment,
 			fitMode,
+			input.getFloatOr("rotationDegrees", ScreenSettings.DEFAULT.rotationDegrees()),
+			input.getBooleanOr("hideFrame", ScreenSettings.DEFAULT.hideFrame()),
 			input.getFloatOr("volume", ScreenSettings.DEFAULT.volume()),
 			input.getBooleanOr("muted", ScreenSettings.DEFAULT.muted()),
 			input.getBooleanOr("loop", ScreenSettings.DEFAULT.loop()),

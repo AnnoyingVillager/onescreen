@@ -124,6 +124,28 @@ public final class ScreenCommands {
 						)
 				)
 				.then(
+					Commands.literal("rotation")
+						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+						.then(
+							Commands.argument("pos", BlockPosArgument.blockPos())
+								.then(
+									Commands.argument("degrees", FloatArgumentType.floatArg())
+										.executes(ScreenCommands::setRotation)
+								)
+						)
+				)
+				.then(
+					Commands.literal("hideframe")
+						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+						.then(
+							Commands.argument("pos", BlockPosArgument.blockPos())
+								.then(
+									Commands.argument("hidden", BoolArgumentType.bool())
+										.executes(ScreenCommands::setHideFrame)
+								)
+						)
+				)
+				.then(
 					Commands.literal("volume")
 						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 						.then(
@@ -339,6 +361,44 @@ public final class ScreenCommands {
 		return 1;
 	}
 
+	private static int setRotation(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		ScreenBlockEntity screen = screen(context);
+		float rotationDegrees = FloatArgumentType.getFloat(context, "degrees");
+		if (!ScreenSettings.isValidRotation(rotationDegrees)) {
+			context.getSource().sendFailure(Component.translatable(
+				"onescreen.command.error.invalid_rotation",
+				ScreenSettings.MIN_ROTATION,
+				ScreenSettings.MAX_ROTATION
+			));
+			return 0;
+		}
+		screen.setRotationDegrees(rotationDegrees);
+		context.getSource().sendSuccess(
+			() -> Component.translatable(
+				"onescreen.command.success.rotation",
+				screen.getBlockPos().toShortString(),
+				rotationDegrees
+			),
+			true
+		);
+		return 1;
+	}
+
+	private static int setHideFrame(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		ScreenBlockEntity screen = screen(context);
+		boolean hidden = BoolArgumentType.getBool(context, "hidden");
+		screen.setHideFrame(hidden);
+		context.getSource().sendSuccess(
+			() -> Component.translatable(
+				"onescreen.command.success.hideframe",
+				screen.getBlockPos().toShortString(),
+				hidden
+			),
+			true
+		);
+		return 1;
+	}
+
 	private static int setVolume(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
 		ScreenBlockEntity screen = screen(context);
 		float volume = FloatArgumentType.getFloat(context, "value");
@@ -419,6 +479,8 @@ public final class ScreenCommands {
 				settings.audioDistance(),
 				Component.translatable(settings.alignment().translationKey()),
 				Component.translatable(settings.fitMode().translationKey()),
+				settings.rotationDegrees(),
+				settings.hideFrame(),
 				settings.volume(),
 				settings.muted(),
 				settings.loop(),

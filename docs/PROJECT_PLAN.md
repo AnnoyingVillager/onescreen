@@ -131,9 +131,16 @@ public record ScreenSettings(
         String url,
         float width,
         float height,
+        float renderDistance,
+        float audioDistance,
+        ScreenAlignment alignment,
+        ScreenFitMode fitMode,
+        float rotationDegrees,
+        boolean hideFrame,
         float volume,
         boolean muted,
-        boolean loop
+        boolean loop,
+        boolean refreshOnResume
 ) {}
 ```
 

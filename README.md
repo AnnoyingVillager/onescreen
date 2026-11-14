@@ -7,16 +7,17 @@ OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模�
 > [!IMPORTANT]
 > **本项目是一个由生成式 AI 主导完成的项目。** 它不是 Mojang、Fabric、WATERMeDIA 或其作者的官方项目，也不是由成熟商业团队维护的产品。代码、文档、构建配置和排错记录主要由生成式 AI 生成与整理，人类用户提供需求、运行环境和实机反馈。使用前请备份世界；建议先在测试世界中验证。
 
-> 当前状态：`0.1.0` 初始公开发布。核心屏幕、编辑界面、图片/视频/声音、播放进度与直播追帧、六向朝向、命令、网络同步、专属创意栏及 OpenGL/Vulkan 渲染路径已实现；后续版本将继续补充直播流、压力和多人测试。
+> 当前状态：`0.1.1` 公开测试版本。核心屏幕、编辑界面、图片/视频/声音、播放进度与直播追帧、六向朝向、命令、网络同步、专属创意栏及 OpenGL/Vulkan 渲染路径已实现；后续版本将继续补充直播流、压力和多人测试。
 
 > 下载：[GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · 源码与问题反馈：[GitHub 仓库](https://github.com/AnnoyingVillager/onescreen)
 
 ## 功能概览
 
 - 1×1×1/16 的薄型屏幕画框，可贴附在任意方块的六个表面。
-- 点击画框打开设置界面，可配置 URL、画面尺寸、渲染距离、声音传播距离、九宫格相对位置、循环播放和直播追帧。
+- 点击画框打开设置界面，可配置 URL、画面尺寸、渲染距离、声音传播距离、九宫格相对位置、平面旋转角度、隐藏画框材质、循环播放和直播追帧。
 - 支持 PNG、JPEG、WebP 图片，以及 MP4、HLS/M3U8 等 WATERMeDIA 支持的媒体；多频道 IPTV 列表目前只播放第一个频道。
-- 支持画面适应、拉伸、平铺、填充和居中五种比例模式；支持音量、静音、循环、暂停、重新加载和调试材质。
+- 支持画面适应、拉伸、平铺、填充和居中五种比例模式；支持音量、静音、循环、暂停、停止、手动刷新和调试材质。
+- 屏幕可在自身平面内按连续角度旋转；可选择隐藏静态画框材质，仅保留媒体画面与右键编辑区域。
 - 设置界面包含播放进度条：已知时长媒体可拖动定位；直播流不可拖动，只显示当前 HLS 片段的目标时长进度。
 - 可选“暂停/配置结束后刷新直播”：默认关闭，开启后在游戏暂停恢复或屏幕配置更新时重连直播流并追到实时边缘。
 - 服务端权威保存屏幕设置，并向客户端同步。
@@ -33,7 +34,7 @@ OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模�
 | Fabric Loader | 0.18.6 | 最低 0.18.0；较新的 0.18.x/0.19+/0.20+ 可按 Fabric 兼容规则运行 |
 | Fabric API | 0.152.0+26.2 | 最低 0.152.0+26.2 |
 | WATERMeDIA | 3.0.0.23 | 3.0.0.23 与 3.0.1 |
-| WATERMeDIA Binaries | 3.0.0 | 与所安装的 WATERMeDIA 3.0.x 版本配套 |
+| WATERMeDIA Binaries | 3.0.0.6 | 早期客户端配套 3.0.0.23；新版客户端使用 3.0.1 |
 
 WATERMeDIA 3.0.0.23 与 3.0.1 使用不同的公开 Java 包布局。OneScreen 通过客户端兼容层自动识别两套 API，因此同一个 OneScreen JAR 无需针对 WATERMeDIA 小版本重复替换。
 
@@ -43,10 +44,10 @@ WATERMeDIA 3.0.0.23 与 3.0.1 使用不同的公开 Java 包布局。OneScreen �
 
 | 使用场景 | WATERMeDIA | WATERMeDIA Binaries |
 |---|---|---|
-| 早期 26.2 客户端 | 3.0.0.23 | 3.0.0 |
+| 早期 26.2 客户端 | 3.0.0.23 | [3.0.0.6](https://www.curseforge.com/minecraft/mc-mods/watermedia-binaries/files/8519058) |
 | 当前 26.2 客户端 | 3.0.1 | 3.0.1 |
 
-请让 WATERMeDIA 与 Binaries 使用同一 3.0.x 版本系列，混用版本可能导致媒体引擎无法初始化。
+请严格按照上表配套使用。经核对，WATERMeDIA `3.0.0.23` 对应 WATERMeDIA Binaries `3.0.0.6`；混用不配套的版本可能导致媒体引擎无法初始化。
 
 ## 必需前置
 
@@ -101,6 +102,8 @@ WATERMeDIA 3.0.0.23 与 3.0.1 使用不同的公开 Java 包布局。OneScreen �
 /screen audiodistance <blocks>
 /screen align <top_left|up|top_right|left|center|right|bottom_left|down|bottom_right>
 /screen fitmode <fit|stretch|tile|fill|center>
+/screen rotation <pos> <-180..180>
+/screen hideframe <pos> <true|false>
 /screen volume <0.0-1.0>
 /screen mute <true|false>
 /screen loop <true|false>

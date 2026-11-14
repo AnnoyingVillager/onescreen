@@ -21,10 +21,15 @@ public final class ScreenEditorNetworking {
 
 	public static void register() {
 		PayloadTypeRegistry.serverboundPlay().register(ScreenSettingsUpdatePayload.TYPE, ScreenSettingsUpdatePayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(ScreenReloadPayload.TYPE, ScreenReloadPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ScreenEditorOpenPayload.TYPE, ScreenEditorOpenPayload.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(ScreenSettingsUpdatePayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			context.server().execute(() -> applyUpdate(player, payload));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(ScreenReloadPayload.TYPE, (payload, context) -> {
+			ServerPlayer player = context.player();
+			context.server().execute(() -> applyReload(player, payload));
 		});
 	}
 
@@ -68,7 +73,8 @@ public final class ScreenEditorNetworking {
 		if (!ScreenSettings.isValidSize(payload.width())
 			|| !ScreenSettings.isValidSize(payload.height())
 			|| !ScreenSettings.isValidRenderDistance(payload.renderDistance(), OneScreenConfig.maxRenderDistance())
-			|| !ScreenSettings.isValidAudioDistance(payload.audioDistance(), OneScreenConfig.maxAudioDistance())) {
+			|| !ScreenSettings.isValidAudioDistance(payload.audioDistance(), OneScreenConfig.maxAudioDistance())
+			|| !ScreenSettings.isValidRotation(payload.rotationDegrees())) {
 			player.sendSystemMessage(Component.translatable("onescreen.editor.error.invalid_value"));
 			return;
 		}
@@ -94,12 +100,39 @@ public final class ScreenEditorNetworking {
 			payload.audioDistance(),
 			payload.alignment(),
 			payload.fitMode(),
+			payload.rotationDegrees(),
+			payload.hideFrame(),
 			payload.loop(),
 			payload.refreshOnResume()
 		));
 		player.sendSystemMessage(Component.translatable(
 			"onescreen.editor.success.saved",
 			screen.getBlockPos().toShortString()
+		));
+	}
+
+	private static void applyReload(final ServerPlayer player, final ScreenReloadPayload payload) {
+		if (!canEdit(player)) {
+			player.sendSystemMessage(Component.translatable("onescreen.editor.error.no_permission"));
+			return;
+		}
+		if (!(player.level().getBlockEntity(payload.pos()) instanceof ScreenBlockEntity screen)) {
+			player.sendSystemMessage(Component.translatable("onescreen.editor.error.not_screen"));
+			return;
+		}
+		if (player.position().distanceToSqr(Vec3.atCenterOf(payload.pos())) > MAX_EDIT_DISTANCE_SQUARED) {
+			player.sendSystemMessage(Component.translatable("onescreen.editor.error.too_far"));
+			return;
+		}
+		if (!screen.getSettings().hasUrl()) {
+			player.sendSystemMessage(Component.translatable("onescreen.command.error.no_url"));
+			return;
+		}
+		int revision = screen.reload();
+		player.sendSystemMessage(Component.translatable(
+			"onescreen.editor.success.refreshed",
+			screen.getBlockPos().toShortString(),
+			revision
 		));
 	}
 

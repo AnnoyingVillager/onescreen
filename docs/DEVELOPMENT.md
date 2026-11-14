@@ -7,7 +7,7 @@
 - 支持 Java 25 的 IDE，推荐 IntelliJ IDEA
 - Minecraft 26.2 测试环境
 - WATERMeDIA `3.0.1` 与 WATERMeDIA Binaries `3.0.1` 用于新版实机测试
-- WATERMeDIA `3.0.0.23` 与 WATERMeDIA Binaries `3.0.0` 仅用于旧版兼容回归
+- WATERMeDIA `3.0.0.23` 与 WATERMeDIA Binaries `3.0.0.6` 仅用于旧版兼容回归
 
 Gradle Wrapper 固定为 `9.8.2`，不需要单独安装 Gradle。
 
@@ -27,8 +27,8 @@ Windows：
 
 构建输出位于 `build/libs/`：
 
-- `onescreen-0.1.0.jar`：正式模组文件。
-- `onescreen-0.1.0-sources.jar`：源码包。
+- `onescreen-0.1.1.jar`：正式模组文件。
+- `onescreen-0.1.1-sources.jar`：源码包。
 
 CI 只接受 JDK 25。使用 Java 21 会在 Fabric Loom 配置阶段失败。
 
@@ -42,6 +42,14 @@ CI 只接受 JDK 25。使用 Java 21 会在 Fabric Loom 配置阶段失败。
 
 ```bash
 ./gradlew runServer
+```
+
+默认构建使用 WATERMeDIA `3.0.0.23` + Binaries `3.0.0.6`。旧版 Binaries 不在 Modrinth Maven 中，因此由 CurseMaven 的 File ID `8519058` 提供。验证新版组合时显式覆盖两个属性：
+
+```powershell
+.\gradlew.bat runClient `
+  -Pwatermedia_version=3.0.1 `
+  -Pwatermedia_binaries_version=3.0.1
 ```
 
 `run/`、`logs/`、`build/` 和 `.gradle/` 都是本地生成目录，不应提交。

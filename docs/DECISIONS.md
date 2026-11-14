@@ -288,7 +288,7 @@ WATERMeDIA `3.0.0.23` 的玩家 API 位于 `org.watermedia.api.media`，`3.0.1` 
 
 - 同一个 OneScreen JAR 可同时支持两套 WATERMeDIA 包布局。
 - 反射调用缺少编译期签名检查，因此升级 WATERMeDIA 时必须运行双版本冒烟测试。
-- 两版都必须搭配同系列的 WATERMeDIA Binaries；OneScreen 不打包原生库。
+- 两版必须使用对应组合：WATERMeDIA `3.0.0.23` + Binaries `3.0.0.6`，或 WATERMeDIA `3.0.1` + Binaries `3.0.1`；OneScreen 不打包原生库。
 - 已在 `3.0.0.23` 上完成编译、构建和 API 识别冒烟测试，并在 `3.0.1` 上完成 API 识别冒烟测试。
 ## ADR-016：媒体引擎首帧前的空格式是合法状态
 
@@ -407,3 +407,29 @@ WATERMeDIA 3.0.1 在图片引擎尚未上传第一帧时，`GFXEngine.format()` 
 - 停止后立即重新播放可在 WATERMeDIA 3.0.1 下恢复为 `LOADING → PLAYING`。
 - 编辑器的小窗口布局已在 856×512 下通过 OpenGL 与 Vulkan 实机视觉检查；字段标签和输入框对齐，底部保存/取消与全部播放控制均在视口内。
 - 用户主动停止、暂停覆盖和异常停止现在是三个独立状态；后续新增播放器生命周期逻辑时必须保留该区分。
+
+## ADR-021：编辑器新增手动刷新、平面旋转与隐藏画框材质
+
+- 状态：Accepted
+- 日期：2026-11-14
+
+### 背景
+
+播放器进入停止或异常状态后，仅依赖播放按钮无法可靠恢复媒体；建筑展示还要求屏幕画框不遮挡环境，并支持任意平面角度。设置必须继续由服务端权威保存，不能只在客户端隐藏或伪旋转。
+
+### 决定
+
+- 编辑器在播放组最左侧新增 `↻` 手动刷新按钮。该按钮不依赖播放器就绪状态，只要求屏幕已保存 URL。
+- 客户端发送受验证的 `ScreenReloadPayload`；服务端重新检查权限、编辑距离、目标方块和 URL，再调用现有 `reload()` 递增 `loadRevision`，由既有媒体协调器关闭并重建会话。
+- `ScreenSettings` 新增持久化 `rotationDegrees`（`-180..180`）与 `hideFrame`（默认 `false`）。
+- 渲染和声音中心统一使用 `ScreenGeometry.right/up(facing, rotationDegrees)` 计算旋转后的平面基向量；九宫格偏移也沿旋转后的局部轴应用。
+- `ScreenBlock` 新增 `hidden` 布尔 blockstate。开启时不渲染静态方块模型，但保留原 VoxelShape、BlockEntity、媒体渲染器和交互逻辑。
+- 打开/更新 payload、NBT、`/screen info`、GUI 和命令同步新增字段；旧存档缺字段时回退到 `0°` 与 `false`。
+- 新增 `/screen rotation <pos> <degrees>` 与 `/screen hideframe <pos> <true|false>`。
+
+### 影响
+
+- 手动刷新会短暂重建播放器，直播流会从当前实时边缘重新连接。
+- 隐藏画框不会破坏方块或移除媒体；玩家仍可在原薄型点击区域右键打开编辑器。
+- `-180..180` 已覆盖所有平面朝向。后续若允许无限角度输入，应在写入前规范化并表示当前等价角度。
+- 新增设置必须继续同时更新服务端校验、GUI payload、BlockEntity 持久化和发布文档。

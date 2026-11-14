@@ -8,6 +8,10 @@ repositories {
 		name = 'Modrinth'
 		url = 'https://api.modrinth.com/maven'
 	}
+	maven {
+		name = 'CurseMaven'
+		url = 'https://www.cursemaven.com'
+	}
 
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
@@ -35,7 +39,10 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	implementation "maven.modrinth:watermedia:${project.watermedia_version}"
-	runtimeOnly "maven.modrinth:watermedia-binaries:${project.watermedia_binaries_version}"
+	def binariesDependency = project.watermedia_binaries_version == '3.0.0.6'
+			? 'curse.maven:watermedia-binaries-1029438:8519058'
+			: "maven.modrinth:watermedia-binaries:${project.watermedia_binaries_version}"
+	runtimeOnly binariesDependency
 }
 
 processResources {

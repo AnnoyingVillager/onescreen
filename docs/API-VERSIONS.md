@@ -11,7 +11,7 @@
 | Gradle | `9.8.2` | Wrapper 固定版本 |
 | Loom | `1.19.4` | 当前实际解析版本 |
 | WATERMeDIA | `3.0.0.23` | 编译基线；与 `3.0.1` 共享运行时兼容层 |
-| WATERMeDIA Binaries | `3.0.0` | 配合 3.0.0.23；新版应使用配套的 `3.0.1` |
+| WATERMeDIA Binaries | `3.0.0.6` | 配合 3.0.0.23；新版应使用配套的 `3.0.1` |
 
 参考：
 
@@ -19,6 +19,7 @@
 - https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml
 - https://modrinth.com/mod/watermedia
 - https://modrinth.com/mod/watermedia-binaries
+- https://www.curseforge.com/minecraft/mc-mods/watermedia-binaries/files/8519058
 
 ## WATERMeDIA 双版本兼容
 

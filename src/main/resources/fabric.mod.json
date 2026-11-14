@@ -30,6 +30,6 @@
 		"java": ">=25",
 		"fabric-api": ">=0.152.0+26.2",
 		"watermedia": ">=3.0.0.23",
-		"watermedia_binaries": ">=3.0.0"
+		"watermedia_binaries": ">=3.0.0.6"
 	}
 }

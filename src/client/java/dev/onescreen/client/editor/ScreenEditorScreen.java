@@ -3,6 +3,7 @@ package dev.onescreen.client.editor;
 import dev.onescreen.OneScreen;
 import dev.onescreen.client.media.MediaPlaybackInfo;
 import dev.onescreen.client.media.ScreenMediaManager;
+import dev.onescreen.editor.ScreenReloadPayload;
 import dev.onescreen.editor.ScreenSettingsUpdatePayload;
 import dev.onescreen.screen.ScreenAlignment;
 import dev.onescreen.screen.ScreenFitMode;
@@ -26,7 +27,7 @@ import org.jspecify.annotations.Nullable;
 
 public final class ScreenEditorScreen extends Screen {
 	private static final int PANEL_WIDTH = 400;
-	private static final int PANEL_HEIGHT = 236;
+	private static final int PANEL_HEIGHT = 254;
 	private static final int ALIGNMENT_BUTTON_WIDTH = 54;
 	private static final int ALIGNMENT_BUTTON_HEIGHT = 14;
 	private static final int ALIGNMENT_GAP = 2;
@@ -47,12 +48,14 @@ public final class ScreenEditorScreen extends Screen {
 	private final String heightValue;
 	private final String renderDistanceValue;
 	private final String audioDistanceValue;
+	private final String rotationDegreesValue;
 	private final float maxRenderDistance;
 	private final float maxAudioDistance;
 	private final Map<ScreenAlignment, Button> alignmentButtons = new EnumMap<>(ScreenAlignment.class);
 	private final Map<ScreenFitMode, Button> fitModeButtons = new EnumMap<>(ScreenFitMode.class);
 	private ScreenAlignment alignment;
 	private ScreenFitMode fitMode;
+	private boolean hideFrame;
 	private boolean loop;
 	private boolean refreshOnResume;
 	private EditBox urlField;
@@ -60,7 +63,9 @@ public final class ScreenEditorScreen extends Screen {
 	private EditBox heightField;
 	private EditBox renderDistanceField;
 	private EditBox audioDistanceField;
+	private EditBox rotationDegreesField;
 	private PlaybackSlider playbackSlider;
+	private Button refreshButton;
 	private Button playButton;
 	private Button pauseButton;
 	private Button stopButton;
@@ -77,6 +82,8 @@ public final class ScreenEditorScreen extends Screen {
 		final float audioDistance,
 		final ScreenAlignment alignment,
 		final ScreenFitMode fitMode,
+		final float rotationDegrees,
+		final boolean hideFrame,
 		final boolean loop,
 		final boolean refreshOnResume,
 		final float maxRenderDistance,
@@ -86,6 +93,7 @@ public final class ScreenEditorScreen extends Screen {
 		this.screenPos = screenPos.immutable();
 		this.alignment = alignment;
 		this.fitMode = fitMode;
+		this.hideFrame = hideFrame;
 		this.loop = loop;
 		this.refreshOnResume = refreshOnResume;
 		this.urlValue = url;
@@ -93,6 +101,7 @@ public final class ScreenEditorScreen extends Screen {
 		this.heightValue = formatNumber(height);
 		this.renderDistanceValue = formatNumber(renderDistance);
 		this.audioDistanceValue = formatNumber(audioDistance);
+		this.rotationDegreesValue = formatNumber(rotationDegrees);
 		this.maxRenderDistance = maxRenderDistance;
 		this.maxAudioDistance = maxAudioDistance;
 	}
@@ -121,10 +130,21 @@ public final class ScreenEditorScreen extends Screen {
 		this.heightField = this.addNumericField("onescreen.editor.height", contentLeft + 268, this.panelTop + 36, this.heightValue);
 		this.renderDistanceField = this.addNumericField("onescreen.editor.render_distance", contentLeft + 88, this.panelTop + 55, this.renderDistanceValue);
 		this.audioDistanceField = this.addNumericField("onescreen.editor.audio_distance", contentLeft + 268, this.panelTop + 55, this.audioDistanceValue);
+		this.rotationDegreesField = this.addNumericField("onescreen.editor.rotation", contentLeft + 88, this.panelTop + 74, this.rotationDegreesValue);
+
+		Checkbox hideFrameCheckbox = Checkbox.builder(
+			Component.translatable("onescreen.editor.hide_frame"),
+			this.font
+		).pos(contentLeft + 180, this.panelTop + 72).maxWidth(PANEL_WIDTH - 200)
+			.selected(this.hideFrame)
+			.onValueChange((checkbox, selected) -> this.hideFrame = selected)
+			.build();
+		hideFrameCheckbox.setTooltip(Tooltip.create(Component.translatable("onescreen.editor.hide_frame.tooltip")));
+		this.addRenderableWidget(hideFrameCheckbox);
 
 		int gridWidth = ALIGNMENT_BUTTON_WIDTH * 3 + ALIGNMENT_GAP * 2;
 		int gridLeft = (this.width - gridWidth) / 2;
-		int gridTop = this.panelTop + 74;
+		int gridTop = this.panelTop + 94;
 		ScreenAlignment[] ordered = {
 			ScreenAlignment.TOP_LEFT, ScreenAlignment.UP, ScreenAlignment.TOP_RIGHT,
 			ScreenAlignment.LEFT, ScreenAlignment.CENTER, ScreenAlignment.RIGHT,
@@ -153,7 +173,7 @@ public final class ScreenEditorScreen extends Screen {
 		int fitRowWidth = FIT_BUTTON_WIDTH * ScreenFitMode.values().length
 			+ FIT_BUTTON_GAP * (ScreenFitMode.values().length - 1);
 		int fitRowLeft = (this.width - fitRowWidth) / 2;
-		int fitRowTop = this.panelTop + 130;
+		int fitRowTop = this.panelTop + 150;
 		ScreenFitMode[] fitModes = ScreenFitMode.values();
 		for (int index = 0; index < fitModes.length; index++) {
 			ScreenFitMode option = fitModes[index];
@@ -175,17 +195,17 @@ public final class ScreenEditorScreen extends Screen {
 
 		this.playbackSlider = this.addRenderableWidget(new PlaybackSlider(
 			contentLeft,
-			this.panelTop + 154,
+			this.panelTop + 174,
 			PANEL_WIDTH - 40,
 			PLAYBACK_HEIGHT
 		));
 
-		int controlGroupWidth = CONTROL_BUTTON_WIDTH * 3 + CONTROL_BUTTON_GAP * 2;
+		int controlGroupWidth = CONTROL_BUTTON_WIDTH * 4 + CONTROL_BUTTON_GAP * 3;
 		int checkboxWidth = PANEL_WIDTH - 40 - controlGroupWidth - 8;
 		Checkbox refreshCheckbox = Checkbox.builder(
 			Component.translatable("onescreen.editor.refresh_on_resume"),
 			this.font
-		).pos(contentLeft, this.panelTop + 173).maxWidth(checkboxWidth)
+		).pos(contentLeft, this.panelTop + 193).maxWidth(checkboxWidth)
 			.selected(this.refreshOnResume)
 			.onValueChange((checkbox, selected) -> this.refreshOnResume = selected)
 			.build();
@@ -195,37 +215,44 @@ public final class ScreenEditorScreen extends Screen {
 		Checkbox loopCheckbox = Checkbox.builder(
 			Component.translatable("onescreen.editor.loop"),
 			this.font
-		).pos(contentLeft, this.panelTop + 194).maxWidth(checkboxWidth)
+		).pos(contentLeft, this.panelTop + 211).maxWidth(checkboxWidth)
 			.selected(this.loop)
 			.onValueChange((checkbox, selected) -> this.loop = selected)
 			.build();
 		this.addRenderableWidget(loopCheckbox);
 
 		int controlLeft = contentLeft + PANEL_WIDTH - 40 - controlGroupWidth;
-		int controlTop = this.panelTop + 184;
+		int controlTop = this.panelTop + 201;
+		this.refreshButton = this.addRenderableWidget(Button.builder(
+			Component.literal("↻"),
+			pressed -> this.requestReload()
+		).bounds(controlLeft, controlTop, CONTROL_BUTTON_WIDTH, WIDGET_HEIGHT)
+			.tooltip(Tooltip.create(Component.translatable("onescreen.editor.control.refresh")))
+			.build());
+		this.refreshButton.active = !this.urlValue.isBlank();
 		this.playButton = this.addPlaybackButton(
-			controlLeft,
+			controlLeft + CONTROL_BUTTON_WIDTH + CONTROL_BUTTON_GAP,
 			controlTop,
 			"▶",
 			"onescreen.editor.control.play",
 			() -> ScreenMediaManager.get().play(this.screenPos)
 		);
 		this.pauseButton = this.addPlaybackButton(
-			controlLeft + CONTROL_BUTTON_WIDTH + CONTROL_BUTTON_GAP,
+			controlLeft + (CONTROL_BUTTON_WIDTH + CONTROL_BUTTON_GAP) * 2,
 			controlTop,
 			"⏸",
 			"onescreen.editor.control.pause",
 			() -> ScreenMediaManager.get().pause(this.screenPos)
 		);
 		this.stopButton = this.addPlaybackButton(
-			controlLeft + (CONTROL_BUTTON_WIDTH + CONTROL_BUTTON_GAP) * 2,
+			controlLeft + (CONTROL_BUTTON_WIDTH + CONTROL_BUTTON_GAP) * 3,
 			controlTop,
 			"⏹",
 			"onescreen.editor.control.stop",
 			() -> ScreenMediaManager.get().stop(this.screenPos)
 		);
 
-		int buttonTop = this.panelTop + 218;
+		int buttonTop = this.panelTop + 236;
 		this.addRenderableWidget(Button.builder(
 			Component.translatable("onescreen.editor.save"),
 			button -> this.save()
@@ -311,6 +338,7 @@ public final class ScreenEditorScreen extends Screen {
 		final float height;
 		final float renderDistance;
 		final float audioDistance;
+		final float rotationDegrees;
 		try {
 			width = parseNumber(this.widthField.getValue(), ScreenSettings.MIN_SIZE, ScreenSettings.MAX_SIZE);
 			height = parseNumber(this.heightField.getValue(), ScreenSettings.MIN_SIZE, ScreenSettings.MAX_SIZE);
@@ -323,6 +351,11 @@ public final class ScreenEditorScreen extends Screen {
 				this.audioDistanceField.getValue(),
 				ScreenSettings.MIN_AUDIO_DISTANCE,
 				this.maxAudioDistance
+			);
+			rotationDegrees = parseNumber(
+				this.rotationDegreesField.getValue(),
+				ScreenSettings.MIN_ROTATION,
+				ScreenSettings.MAX_ROTATION
 			);
 		} catch (IllegalArgumentException exception) {
 			this.status = Component.translatable("onescreen.editor.error.invalid_value");
@@ -352,6 +385,8 @@ public final class ScreenEditorScreen extends Screen {
 			audioDistance,
 			this.alignment,
 			this.fitMode,
+			rotationDegrees,
+			this.hideFrame,
 			this.loop,
 			this.refreshOnResume
 		));
@@ -402,6 +437,7 @@ public final class ScreenEditorScreen extends Screen {
 		this.playButton.active = controlsActive;
 		this.pauseButton.active = controlsActive;
 		this.stopButton.active = controlsActive;
+		this.refreshButton.active = !this.urlValue.isBlank();
 
 		graphics.fill(this.panelLeft, this.panelTop, this.panelLeft + PANEL_WIDTH, this.panelTop + PANEL_HEIGHT, 0xE0101010);
 		graphics.outline(this.panelLeft, this.panelTop, PANEL_WIDTH, PANEL_HEIGHT, 0xFF808080);
@@ -419,12 +455,26 @@ public final class ScreenEditorScreen extends Screen {
 		graphics.text(this.font, Component.translatable("onescreen.editor.height"), contentLeft + 180, this.fieldLabelY(this.heightField), LABEL_COLOR);
 		graphics.text(this.font, Component.translatable("onescreen.editor.render_distance"), contentLeft, this.fieldLabelY(this.renderDistanceField), LABEL_COLOR);
 		graphics.text(this.font, Component.translatable("onescreen.editor.audio_distance"), contentLeft + 180, this.fieldLabelY(this.audioDistanceField), LABEL_COLOR);
-		graphics.text(this.font, Component.translatable("onescreen.editor.position"), contentLeft, this.panelTop + 71, LABEL_COLOR);
+		graphics.text(this.font, Component.translatable("onescreen.editor.rotation"), contentLeft, this.fieldLabelY(this.rotationDegreesField), LABEL_COLOR);
+		graphics.text(this.font, Component.translatable("onescreen.editor.position"), contentLeft, this.panelTop + 91, LABEL_COLOR);
 
-		graphics.text(this.font, Component.translatable("onescreen.editor.fit_mode"), contentLeft, this.panelTop + 123, LABEL_COLOR);
-		graphics.text(this.font, Component.translatable("onescreen.editor.playback"), contentLeft, this.panelTop + 147, LABEL_COLOR);
+		graphics.text(this.font, Component.translatable("onescreen.editor.fit_mode"), contentLeft, this.panelTop + 143, LABEL_COLOR);
+		graphics.text(this.font, Component.translatable("onescreen.editor.playback"), contentLeft, this.panelTop + 167, LABEL_COLOR);
 
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+	}
+
+	private void requestReload() {
+		if (this.urlValue.isBlank()) {
+			this.status = Component.translatable("onescreen.command.error.no_url");
+			return;
+		}
+		if (!ClientPlayNetworking.canSend(ScreenReloadPayload.TYPE)) {
+			this.status = Component.translatable("onescreen.editor.error.client_support");
+			return;
+		}
+		ClientPlayNetworking.send(new ScreenReloadPayload(this.screenPos));
+		this.status = Component.translatable("onescreen.editor.refresh.requested");
 	}
 
 	private final class PlaybackSlider extends AbstractSliderButton {

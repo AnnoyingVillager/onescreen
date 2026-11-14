@@ -34,6 +34,8 @@ public final class OneScreenClient implements ClientModInitializer {
 				payload.audioDistance(),
 				payload.alignment(),
 				payload.fitMode(),
+				payload.rotationDegrees(),
+				payload.hideFrame(),
 				payload.loop(),
 				payload.refreshOnResume(),
 				payload.maxRenderDistance(),

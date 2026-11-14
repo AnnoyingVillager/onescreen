@@ -10,6 +10,8 @@ public record ScreenSettings(
 	float audioDistance,
 	ScreenAlignment alignment,
 	ScreenFitMode fitMode,
+	float rotationDegrees,
+	boolean hideFrame,
 	float volume,
 	boolean muted,
 	boolean loop,
@@ -24,10 +26,13 @@ public record ScreenSettings(
 	public static final float MIN_AUDIO_DISTANCE = 2.0F;
 	public static final float DEFAULT_MAX_AUDIO_DISTANCE = 128.0F;
 	public static final float HARD_MAX_AUDIO_DISTANCE = 1024.0F;
+	public static final float MIN_ROTATION = -180.0F;
+	public static final float MAX_ROTATION = 180.0F;
 	public static final float DEFAULT_WIDTH = 4.0F;
 	public static final float DEFAULT_HEIGHT = 2.25F;
 	public static final float DEFAULT_RENDER_DISTANCE = 96.0F;
 	public static final float DEFAULT_AUDIO_DISTANCE = 48.0F;
+	public static final float DEFAULT_ROTATION = 0.0F;
 	public static final float DEFAULT_VOLUME = 1.0F;
 	public static final ScreenSettings DEFAULT = new ScreenSettings(
 		"",
@@ -37,6 +42,8 @@ public record ScreenSettings(
 		DEFAULT_AUDIO_DISTANCE,
 		ScreenAlignment.CENTER,
 		ScreenFitMode.FIT,
+		DEFAULT_ROTATION,
+		false,
 		DEFAULT_VOLUME,
 		false,
 		true,
@@ -51,31 +58,40 @@ public record ScreenSettings(
 		audioDistance = clampAudioDistance(audioDistance);
 		alignment = alignment == null ? ScreenAlignment.CENTER : alignment;
 		fitMode = fitMode == null ? ScreenFitMode.FIT : fitMode;
+		rotationDegrees = clampRotation(rotationDegrees);
 		volume = clampVolume(volume);
 	}
 
 	public ScreenSettings withUrl(final String nextUrl) {
-		return new ScreenSettings(nextUrl, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.volume, this.muted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(nextUrl, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withSize(final float nextWidth, final float nextHeight) {
-		return new ScreenSettings(this.url, nextWidth, nextHeight, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.volume, this.muted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(this.url, nextWidth, nextHeight, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withRenderDistance(final float nextRenderDistance) {
-		return new ScreenSettings(this.url, this.width, this.height, nextRenderDistance, this.audioDistance, this.alignment, this.fitMode, this.volume, this.muted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, nextRenderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withAudioDistance(final float nextAudioDistance) {
-		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, nextAudioDistance, this.alignment, this.fitMode, this.volume, this.muted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, nextAudioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withAlignment(final ScreenAlignment nextAlignment) {
-		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, nextAlignment, this.fitMode, this.volume, this.muted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, nextAlignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withFitMode(final ScreenFitMode nextFitMode) {
-		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, nextFitMode, this.volume, this.muted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, nextFitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
+	}
+
+	public ScreenSettings withRotationDegrees(final float nextRotationDegrees) {
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, nextRotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
+	}
+
+	public ScreenSettings withHideFrame(final boolean nextHideFrame) {
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, nextHideFrame, this.volume, this.muted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withEditorSettings(
@@ -86,6 +102,8 @@ public record ScreenSettings(
 		final float nextAudioDistance,
 		final ScreenAlignment nextAlignment,
 		final ScreenFitMode nextFitMode,
+		final float nextRotationDegrees,
+		final boolean nextHideFrame,
 		final boolean nextLoop,
 		final boolean nextRefreshOnResume
 	) {
@@ -97,6 +115,8 @@ public record ScreenSettings(
 			nextAudioDistance,
 			nextAlignment,
 			nextFitMode,
+			nextRotationDegrees,
+			nextHideFrame,
 			this.volume,
 			this.muted,
 			nextLoop,
@@ -105,19 +125,19 @@ public record ScreenSettings(
 	}
 
 	public ScreenSettings withVolume(final float nextVolume) {
-		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, nextVolume, this.muted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, nextVolume, this.muted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withMuted(final boolean nextMuted) {
-		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.volume, nextMuted, this.loop, this.refreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, nextMuted, this.loop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withLoop(final boolean nextLoop) {
-		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.volume, this.muted, nextLoop, this.refreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, nextLoop, this.refreshOnResume);
 	}
 
 	public ScreenSettings withRefreshOnResume(final boolean nextRefreshOnResume) {
-		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.volume, this.muted, this.loop, nextRefreshOnResume);
+		return new ScreenSettings(this.url, this.width, this.height, this.renderDistance, this.audioDistance, this.alignment, this.fitMode, this.rotationDegrees, this.hideFrame, this.volume, this.muted, this.loop, nextRefreshOnResume);
 	}
 
 	public boolean hasUrl() {
@@ -144,6 +164,10 @@ public record ScreenSettings(
 		return isInRange(value, MIN_AUDIO_DISTANCE, Math.min(maxDistance, HARD_MAX_AUDIO_DISTANCE));
 	}
 
+	public static boolean isValidRotation(final float value) {
+		return isInRange(value, MIN_ROTATION, MAX_ROTATION);
+	}
+
 	private static String sanitizeLoadedUrl(final String value) {
 		if (value == null || value.length() > MAX_URL_LENGTH) {
 			return "";
@@ -168,6 +192,10 @@ public record ScreenSettings(
 
 	private static float clampAudioDistance(final float value) {
 		return clampFinite(value, DEFAULT_AUDIO_DISTANCE, MIN_AUDIO_DISTANCE, HARD_MAX_AUDIO_DISTANCE);
+	}
+
+	private static float clampRotation(final float value) {
+		return clampFinite(value, DEFAULT_ROTATION, MIN_ROTATION, MAX_ROTATION);
 	}
 
 	private static float clampVolume(final float value) {

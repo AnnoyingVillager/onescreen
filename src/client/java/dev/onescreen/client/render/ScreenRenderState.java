@@ -12,6 +12,7 @@ public final class ScreenRenderState extends net.minecraft.client.renderer.block
 	public Direction facing = Direction.NORTH;
 	public ScreenAlignment alignment = ScreenAlignment.CENTER;
 	public ScreenFitMode fitMode = ScreenFitMode.FIT;
+	public float rotationDegrees;
 	public float width = 4.0F;
 	public float height = 2.25F;
 	public float renderDistance = 96.0F;

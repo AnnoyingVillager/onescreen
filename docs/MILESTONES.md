@@ -138,7 +138,9 @@
 - 2026-11-14：同一模型修复在 OpenGL 3.3 完成边框、媒体方向和透明/调试状态回归。
 
 - 2026-11-14：新增 `onescreen:screen` 专属创意栏并以屏幕画框作为栏图标；移除建筑方块栏注入。OpenGL 3.3 实机确认 `OneScreen` 栏目和内嵌物品显示，`gradlew build` 通过。
-- 2026-11-14：WATERMeDIA 双布局兼容层完成。`3.0.0.23` 基线通过 `compileJava`、`compileClientJava` 和 `build`；两版 API 识别冒烟测试分别输出 `WATERMeDIA 3.0.0.x MediaAPI` 与 `WATERMeDIA 3.0.1+ PlayerAPI`。Binaries 3.0.0 官方文件的 SHA-512 已校验。匹配组合的游戏内图片、视频、声音及 OpenGL/Vulkan 回归仍待执行。`3.0.0.23` 仅为初版兼容，未来可能移除。
+- 2026-11-14：WATERMeDIA 双布局兼容层完成。`3.0.0.23` 基线通过 `compileJava`、`compileClientJava` 和 `build`；两版 API 识别冒烟测试分别输出 `WATERMeDIA 3.0.0.x MediaAPI` 与 `WATERMeDIA 3.0.1+ PlayerAPI`。Binaries 3.0.0.6 官方文件已核对。后续已完成旧组合 Vulkan 视频回归与新版组合 OpenGL/Vulkan 回归。`3.0.0.23` 仅为初版兼容，未来可能移除。
 - 2026-11-14：修复 WATERMeDIA 图片首帧前 `GFXEngine.format() == null` 导致的 `Render Frame` 崩溃。错误报告中的 HTTPS 图片已经成功加载，崩溃与 HTTPS 无关；修复后 `compileJava`、`compileClientJava`、`build` 及两版 API 的 `format(null)` 冒烟测试均通过。另确认 OneScreen 接受 HTTP/HTTPS M3U8，WATERMeDIA 3.0.1 支持 HLS Master/Media Playlist、直播/VOD 探测和 FFmpeg HLS 解复用；IPTV 多频道列表当前只播放第一个源，实机回归待做。
 - 2026-11-14：紧凑编辑器在 OpenGL 3.3 与 Vulkan 1.4.329、856×512 窗口下完成实机回归；字段标签与输入框对齐，底部保存/取消和 ▶/⏸/⏹ 控件完整可见。播放、暂停、停止及停止后重新播放均进入预期状态；Vulkan 回归中发现并修复了停止后重播时的播放器空指针，关闭编辑器后游戏暂停会重新正确冻结媒体。
 - 2026-11-14：公开 GitHub 仓库、MIT 许可证、脱敏开发文档、CI 构建与标签自动发布工作流已配置；0.1.0 Release 由 Actions 成功生成主 JAR、源码 JAR 和 SHA-256 文件，下载后的双 WATERMeDIA API 冒烟测试通过。
+
+- 2026-11-14：0.1.1 屏幕控制更新完成。编辑器新增手动刷新、`-180°..180°` 平面旋转和默认关闭的隐藏画框材质；服务端新增权威 reload payload、旋转/隐藏命令与持久化字段。WATERMeDIA 3.0.1 + Binaries 3.0.1 在 OpenGL 3.3 与 Vulkan 1.4.329 下完成停止→刷新→播放、旋转、隐藏后交互及重进世界持久化回归；WATERMeDIA 3.0.0.23 + Binaries 3.0.0.6 在 Vulkan 1.4.329 下完成视频、停止、刷新和重新播放回归。

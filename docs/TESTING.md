@@ -99,6 +99,21 @@ gradlew runGameTestServer
 - [ ] 1 秒内连续配置更新不会造成重连风暴。
 - [ ] OpenGL 与 Vulkan 下均验证进度滑块、循环勾选和直播追帧。
 
+### 手动刷新、旋转与隐藏画框
+
+- [x] 停止播放后 `↻` 按钮仍可用。
+- [x] 手动刷新由服务端递增 `loadRevision`，客户端关闭旧会话并重建同一 URL。
+- [x] 刷新后点击播放可从 `LOADING` 进入 `PLAYING`。
+- [x] `-180°` 到 `180°` 数值可保存；旧存档缺少字段时回退到 `0°`。
+- [x] 旋转后媒体四边形、九宫格偏移和声音距离中心使用一致几何。
+- [x] 水平与上下朝向使用同一旋转平面。
+- [x] 隐藏画框默认关闭；开启后静态模型消失，动态媒体保留。
+- [x] 隐藏画框后仍可通过原点击区域右键打开编辑器。
+- [x] 旋转与隐藏状态在退出并重进世界后恢复。
+- [x] `/screen rotation`、`/screen hideframe` 与 `/screen info` 实机可用。
+- [x] WATERMeDIA 3.0.1：OpenGL 3.3 与 Vulkan 1.4.329 均完成上述回归。
+- [x] 编辑面板在 856×512 下完整显示新增字段、复选框和四个播放控制按钮。
+
 ### 画面适应模式
 
 - [x] GUI 可选择适应、拉伸、平铺、填充和居中，并通过 payload 保存。
@@ -158,10 +173,10 @@ gradlew runGameTestServer
 - [x] `WATERMeDIA 3.0.0.23`：`compileJava`、`compileClientJava` 和 `build` 通过。
 - [x] `WATERMeDIA 3.0.0.23`：运行时识别为 `WATERMeDIA 3.0.0.x MediaAPI`。
 - [x] `WATERMeDIA 3.0.1`：运行时识别为 `WATERMeDIA 3.0.1+ PlayerAPI`。
-- [x] `WATERMeDIA Binaries 3.0.0`：官方文件大小与 SHA-512 校验通过。
-- [ ] `WATERMeDIA 3.0.0.23 + Binaries 3.0.0`：图片、视频、声音的匹配组合实机回归。
-- [ ] `WATERMeDIA 3.0.1 + Binaries 3.0.1`：图片、视频、声音的匹配组合实机回归。
-- [ ] 两套组合分别完成 OpenGL 与 Vulkan 的播放回归。
+- [x] `WATERMeDIA Binaries 3.0.0.6`：与 WATERMeDIA 3.0.0.23 的配套关系及官方文件大小已核对。
+- [x] `WATERMeDIA 3.0.0.23 + Binaries 3.0.0.6`：Vulkan 1.4.329 下视频、硬件解码路径、停止、手动刷新与重新播放进入 `PLAYING`。
+- [x] `WATERMeDIA 3.0.1 + Binaries 3.0.1`：OpenGL 3.3 与 Vulkan 1.4.329 下完成媒体与 0.1.1 功能回归。
+- [ ] 3.0.0.23 + Binaries 3.0.0.6：OpenGL 3.3 播放回归。
 
 `3.0.0.23` 仅提供初版兼容，未来可能移除；新增功能默认只保证 `3.0.1`。
 
@@ -241,12 +256,12 @@ totalTextureBytesEstimate=...
 
 ## 发布前检查
 
-- [ ] 版本号更新。
-- [ ] changelog 更新。
-- [ ] WATERMeDIA 与 Binaries 版本在 README 中说明。
-- [ ] Release JAR 不包含本地 Binaries。
-- [ ] 客户端与服务端安装说明完整。
-- [ ] 已知限制写入发布说明。
+- [x] 版本号更新。
+- [x] changelog 更新。
+- [x] WATERMeDIA 与 Binaries 版本在 README 中说明。
+- [x] Release JAR 不包含本地 Binaries。
+- [x] 客户端与服务端安装说明完整。
+- [x] 已知限制写入发布说明。
 - [x] OpenGL 路径测试。
 - [x] Vulkan 路径测试（26.2 Vulkan 1.4.329）。
-- [ ] 无敏感 URL 出现在日志或测试文件。
+- [x] 无敏感 URL 出现在日志或测试文件。

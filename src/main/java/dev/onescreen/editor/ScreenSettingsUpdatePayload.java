@@ -18,6 +18,8 @@ public record ScreenSettingsUpdatePayload(
 	float audioDistance,
 	ScreenAlignment alignment,
 	ScreenFitMode fitMode,
+	float rotationDegrees,
+	boolean hideFrame,
 	boolean loop,
 	boolean refreshOnResume
 ) implements CustomPacketPayload {
@@ -33,6 +35,8 @@ public record ScreenSettingsUpdatePayload(
 			buffer.writeFloat(payload.audioDistance());
 			buffer.writeEnum(payload.alignment());
 			buffer.writeEnum(payload.fitMode());
+			buffer.writeFloat(payload.rotationDegrees());
+			buffer.writeBoolean(payload.hideFrame());
 			buffer.writeBoolean(payload.loop());
 			buffer.writeBoolean(payload.refreshOnResume());
 		},
@@ -45,6 +49,8 @@ public record ScreenSettingsUpdatePayload(
 			buffer.readFloat(),
 			ScreenAlignment.byOrdinal(buffer.readVarInt()),
 			ScreenFitMode.byOrdinal(buffer.readVarInt()),
+			buffer.readFloat(),
+			buffer.readBoolean(),
 			buffer.readBoolean(),
 			buffer.readBoolean()
 		)

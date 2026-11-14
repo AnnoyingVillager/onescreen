@@ -18,6 +18,8 @@ public record ScreenEditorOpenPayload(
 	float audioDistance,
 	ScreenAlignment alignment,
 	ScreenFitMode fitMode,
+	float rotationDegrees,
+	boolean hideFrame,
 	boolean loop,
 	boolean refreshOnResume,
 	float maxRenderDistance,
@@ -35,6 +37,8 @@ public record ScreenEditorOpenPayload(
 			buffer.writeFloat(payload.audioDistance());
 			buffer.writeEnum(payload.alignment());
 			buffer.writeEnum(payload.fitMode());
+			buffer.writeFloat(payload.rotationDegrees());
+			buffer.writeBoolean(payload.hideFrame());
 			buffer.writeBoolean(payload.loop());
 			buffer.writeBoolean(payload.refreshOnResume());
 			buffer.writeFloat(payload.maxRenderDistance());
@@ -49,6 +53,8 @@ public record ScreenEditorOpenPayload(
 			buffer.readFloat(),
 			ScreenAlignment.byOrdinal(buffer.readVarInt()),
 			ScreenFitMode.byOrdinal(buffer.readVarInt()),
+			buffer.readFloat(),
+			buffer.readBoolean(),
 			buffer.readBoolean(),
 			buffer.readBoolean(),
 			buffer.readFloat(),
@@ -71,6 +77,8 @@ public record ScreenEditorOpenPayload(
 			settings.audioDistance(),
 			settings.alignment(),
 			settings.fitMode(),
+			settings.rotationDegrees(),
+			settings.hideFrame(),
 			settings.loop(),
 			settings.refreshOnResume(),
 			maxRenderDistance,

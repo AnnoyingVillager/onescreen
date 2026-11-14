@@ -9,7 +9,7 @@
 - Gradle 9.8.2
 - Loom 1.19-SNAPSHOT
 - WATERMeDIA 3.0.0.23 build baseline; 3.0.1 runtime-compatible through WaterMediaCompat
-- WATERMeDIA Binaries 3.0.0 build baseline; 3.0.1 pairing supported
+- WATERMeDIA Binaries 3.0.0.6 paired with 3.0.0.23; 3.0.1 pairing supported
 
 Pin exact resolved versions before release. Do not silently upgrade Minecraft, mappings, media APIs, or editor models.
 

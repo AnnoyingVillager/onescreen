@@ -73,9 +73,18 @@
   "onescreen.command.success.muted": "Screen %s muted: %s",
   "onescreen.command.success.loop": "Screen %s loop: %s",
   "onescreen.command.success.reload": "Screen %s reload scheduled (revision %s)",
-  "onescreen.command.info": "Screen %s\nURL: %s\nSize: %s x %s\nRender distance: %s, audio distance: %s\nPicture position: %s\nAspect fit: %s\nVolume: %s, muted: %s, loop: %s\nRefresh live stream after pause/config: %s\nLoad revision: %s",
+  "onescreen.command.info": "Screen %s\nURL: %s\nSize: %s x %s\nRender distance: %s, audio distance: %s\nPicture position: %s\nAspect fit: %s, rotation: %s°, hide frame: %s\nVolume: %s, muted: %s, loop: %s\nRefresh live stream after pause/config: %s\nLoad revision: %s",
   "onescreen.command.info.debug": "Screen debug material: %s",
   "onescreen.command.success.debug": "Screen debug material set to %s",
   "onescreen.command.debug.on": "on",
-  "onescreen.command.debug.off": "off"
+  "onescreen.command.debug.off": "off",
+  "onescreen.editor.rotation": "Rotation (°)",
+  "onescreen.editor.hide_frame": "Hide frame material",
+  "onescreen.editor.hide_frame.tooltip": "Hides the static screen-frame model while keeping the media screen, interaction shape, and editor available. Off by default.",
+  "onescreen.editor.control.refresh": "Reload media",
+  "onescreen.editor.refresh.requested": "Reload requested; reconnecting this media URL…",
+  "onescreen.editor.success.refreshed": "Screen %s refreshed (load revision %s).",
+  "onescreen.command.error.invalid_rotation": "Screen rotation must be from %s to %s degrees.",
+  "onescreen.command.success.rotation": "Screen %s rotation set to %s°",
+  "onescreen.command.success.hideframe": "Screen %s hide frame material: %s"
 }

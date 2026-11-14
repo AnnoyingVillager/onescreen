@@ -49,6 +49,7 @@ public final class ScreenRenderer implements BlockEntityRenderer<ScreenBlockEnti
 		state.facing = blockEntity.getBlockState().getValue(ScreenBlock.FACING);
 		state.alignment = settings.alignment();
 		state.fitMode = settings.fitMode();
+		state.rotationDegrees = settings.rotationDegrees();
 		state.width = settings.width();
 		state.height = settings.height();
 		state.renderDistance = settings.renderDistance();
@@ -122,8 +123,8 @@ public final class ScreenRenderer implements BlockEntityRenderer<ScreenBlockEnti
 		final int color
 	) {
 		Direction facing = state.facing;
-		Vec3 right = ScreenGeometry.right(facing);
-		Vec3 up = ScreenGeometry.up(facing);
+		Vec3 right = ScreenGeometry.right(facing, state.rotationDegrees);
+		Vec3 up = ScreenGeometry.up(facing, state.rotationDegrees);
 		float horizontalOffset = ScreenGeometry.horizontalOffset(state.width, state.alignment);
 		float verticalOffset = ScreenGeometry.verticalOffset(state.height, state.alignment);
 		float halfWidth = quadWidth * 0.5F;

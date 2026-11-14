@@ -86,7 +86,7 @@ public void extractRenderState(
 - 屏幕中心为方块中心附近。
 - 屏幕正面由 `FACING` 决定。
 - 四边使用 `width` 和 `height` 个方块单位。
-- 第一版只支持水平四向。
+- 当前支持水平四向和 `UP` / `DOWN`；媒体可在所在平面内按 `rotationDegrees` 连续旋转。
 
 伪代码：
 
@@ -183,3 +183,12 @@ public AABB getRenderBoundingBox(ScreenBlockEntity entity) {
 - Fabric Block Entity Renderers: https://docs.fabricmc.net/develop/blocks/block-entity-renderer
 - Fabric Block Entities: https://docs.fabricmc.net/develop/blocks/block-entities
 - NeoForge 26.2 渲染变更: https://docs.neoforged.net/primer/docs/26.2/
+
+## 0.1.1 平面旋转与隐藏画框
+
+- `ScreenGeometry.right(facing, rotationDegrees)` 与 `up(facing, rotationDegrees)` 在原始平面基向量上做二维旋转，保持右手基和面法线不变。
+- 媒体四边形、九宫格偏移和声音中心共用同一组旋转基向量，避免画面与声音中心错位。
+- `ScreenBlock.hidden` 为默认关闭的 blockstate；开启时 `getRenderShape()` 返回 `INVISIBLE`，BlockEntityRenderer 仍按原流程提交动态媒体。
+- 点击形状不随隐藏状态移除，因此建筑展示场景仍可编辑屏幕。
+- 旋转只改变平面内方向，不引入完整三维欧拉旋转，也不改变 `FACING` 决定的贴附表面。
+- 手动刷新由服务端递增 `loadRevision`，渲染器不直接创建或释放播放器；媒体协调器在后续 tick 中按既有生命周期重建会话。

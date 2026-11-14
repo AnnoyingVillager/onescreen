@@ -7,7 +7,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 > [!IMPORTANT]
 > **This project is primarily developed with generative AI.** It is not an official Mojang, Fabric, or WATERMeDIA project and is not maintained by a mature commercial team. Code, documentation, build configuration, and troubleshooting notes are largely generated and organized by AI, while the human user provides requirements, testing environments, and in-game feedback. Back up your worlds and test new versions in a separate world first.
 
-> Current status: initial public release `0.1.0`. Core screen rendering, the editor, image/video/audio playback, playback progress and live-stream refresh, six-direction placement, commands, networking, the dedicated creative tab, and both OpenGL and Vulkan rendering paths are implemented. Additional live-stream, stress, and multiplayer validation will continue in later versions.
+> Current status: public test release `0.1.1`. Core screen rendering, the editor, image/video/audio playback, playback progress and live-stream refresh, six-direction placement, commands, networking, the dedicated creative tab, and both OpenGL and Vulkan rendering paths are implemented. Additional live-stream, stress, and multiplayer validation will continue in later versions.
 
 > Download: [GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · Source and issue tracker: [GitHub repository](https://github.com/AnnoyingVillager/onescreen)
 
@@ -17,10 +17,11 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 ## Features
 
 - A thin `1×1×1/16` screen frame that can be attached to any of the six faces of a block.
-- Right-click the frame to open an editor for the media URL, width, height, render distance, audio distance, nine-grid alignment, looping, and live-stream refresh.
+- Right-click the frame to open an editor for the media URL, width, height, render distance, audio distance, nine-grid alignment, in-plane rotation, frame visibility, looping, and live-stream refresh.
 - PNG, JPEG, and WebP images, plus MP4, HLS/M3U8, and other media supported by WATERMeDIA. Multi-channel IPTV playlists currently play only the first channel.
 - Five aspect-ratio modes: Fit, Stretch, Tile, Fill, and Center.
-- Volume, mute, loop, pause, stop, resume, reload, and debug placeholder controls.
+- Volume, mute, loop, pause, stop, resume, manual reload, and debug placeholder controls.
+- Continuous in-plane rotation and an optional hidden-frame-material mode that keeps media and right-click editing available.
 - A seek bar for media with a known duration. Live streams use a read-only approximate progress display based on the current HLS segment.
 - Optional “refresh live stream after pause/config” behavior. It is disabled by default and reconnects live streams after a pause or configuration change.
 - Server-authoritative screen settings synchronized to clients.
@@ -37,7 +38,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 | Fabric Loader | 0.18.6 | Minimum 0.18.0 |
 | Fabric API | 0.152.0+26.2 | Minimum 0.152.0+26.2 |
 | WATERMeDIA | 3.0.0.23 | 3.0.0.23 and 3.0.1 |
-| WATERMeDIA Binaries | 3.0.0 | Must match the installed WATERMeDIA 3.0.x series |
+| WATERMeDIA Binaries | 3.0.0.6 | Paired with 3.0.0.23 for legacy clients; use 3.0.1 for current clients |
 
 WATERMeDIA 3.0.0.23 and 3.0.1 use different public Java package layouts. OneScreen contains a reflective compatibility layer, so the same OneScreen JAR can detect and use either API layout.
 
@@ -47,10 +48,10 @@ WATERMeDIA 3.0.0.23 and 3.0.1 use different public Java package layouts. OneScre
 
 | Use case | WATERMeDIA | WATERMeDIA Binaries |
 |---|---|---|
-| Early 26.2 client | 3.0.0.23 | 3.0.0 |
+| Early 26.2 client | 3.0.0.23 | [3.0.0.6](https://www.curseforge.com/minecraft/mc-mods/watermedia-binaries/files/8519058) |
 | Current 26.2 client | 3.0.1 | 3.0.1 |
 
-Do not mix unrelated WATERMeDIA and Binaries generations. A mismatch can prevent the media engine from initializing.
+Use only the combinations listed above. WATERMeDIA `3.0.0.23` corresponds to WATERMeDIA Binaries `3.0.0.6`. A mismatch can prevent the media engine from initializing.
 
 ## Required dependencies
 
@@ -93,7 +94,7 @@ The integrated server and dedicated servers can increase these limits up to `409
 
 1. Obtain a screen frame from the `OneScreen` creative tab and attach it to a block surface.
 2. Right-click the frame to open the editor.
-3. Enter an HTTP/HTTPS media URL and configure size, distances, alignment, aspect-ratio mode, looping, and optional live-stream refresh.
+3. Enter an HTTP/HTTPS media URL and configure size, distances, alignment, rotation, frame visibility, aspect-ratio mode, looping, and optional live-stream refresh.
 4. Save the settings. The server synchronizes them and the client loads the media asynchronously.
 
 Common commands:
@@ -105,6 +106,8 @@ Common commands:
 /screen audiodistance <blocks>
 /screen align <top_left|up|top_right|left|center|right|bottom_left|down|bottom_right>
 /screen fitmode <fit|stretch|tile|fill|center>
+/screen rotation <pos> <-180..180>
+/screen hideframe <pos> <true|false>
 /screen volume <0.0-1.0>
 /screen mute <true|false>
 /screen loop <true|false>
@@ -140,6 +143,7 @@ Artifacts are written to `build/libs/`. GitHub Actions builds every push and pul
 - Remote media availability and codec support depend on WATERMeDIA, the network, and the local decoder.
 - `fit`, `fill`, and `stretch` use the whole screen as their bounds. `tile` and `center` use one block along the media's longest side as their base size.
 - HLS live streams cannot be seeked with the progress bar. Only an approximate current-segment progress value is shown.
+- Rotation accepts `-180°` through `180°`, which covers every in-plane orientation. Hiding the frame removes only the static model; the screen block and media interaction area remain.
 - Enabling live-stream refresh may cause a short black frame, buffering delay, or audio restart because the player is reopened.
 - The primary video path still copies CPU frames into a Minecraft dynamic texture. 4K/8K high-frame-rate playback is not a default performance promise.
 - Multi-channel IPTV playlists currently use only the first source.

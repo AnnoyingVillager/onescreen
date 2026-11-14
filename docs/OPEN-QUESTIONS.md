@@ -32,4 +32,4 @@
 - [x] 最终显示名称为 OneScreen。
 - [x] Mod ID 为 `onescreen`，包名为 `dev.onescreen`，作者为 AnnoyingVillager 与 OneScreen contributors，许可证为 MIT。
 - [x] 0.1.x 先通过 GitHub Releases 发布；CurseForge 与 Modrinth 在完成更完整的直播流和多人验收后再评估。
-- [x] README 明确要求 WATERMeDIA 与 Binaries 使用同系列版本，并在 Release 说明中重复列出。
+- [x] README 明确列出 WATERMeDIA `3.0.0.23` + Binaries `3.0.0.6` 与 `3.0.1` + `3.0.1` 两组配套版本，并在 Release 说明中重复列出。

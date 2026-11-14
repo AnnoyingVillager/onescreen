@@ -57,7 +57,7 @@ flowchart TB
 
 ### `ScreenSettings`
 
-纯记录对象，作为序列化和命令修改的边界。除了 URL、尺寸、距离、九宫格位置、音量和循环设置，还包含 `ScreenFitMode` 与 `refreshOnResume`。
+纯记录对象，作为序列化和命令修改的边界。除 URL、尺寸、距离、九宫格位置、音量和循环设置外，还包含 `ScreenFitMode`、`rotationDegrees`、`hideFrame` 与 `refreshOnResume`。
 
 ### `ScreenFitGeometry`
 
