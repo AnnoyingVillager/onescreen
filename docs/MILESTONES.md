@@ -13,7 +13,7 @@
 | M6 视频声音 | DONE | 播放状态、距离音量 | 视频/音频同步 |
 | M7 命令同步 | DONE | 命令树、URL 校验、reload 修订 | 命令与重进恢复 |
 | M8 稳定性 | IN_PROGRESS | 会话上限、清理、日志 | 30 分钟测试待做 |
-| M9 多人发布 | TODO | 发布包、说明、清单 | 全矩阵通过 |
+| M9 多人发布 | IN_PROGRESS | GitHub Release、发布包、说明、清单 | GitHub 0.1.0 已发布；CurseForge/Modrinth 与完整多人矩阵待完成 |
 
 ## M0 范围冻结
 
@@ -141,3 +141,4 @@
 - 2026-11-14：WATERMeDIA 双布局兼容层完成。`3.0.0.23` 基线通过 `compileJava`、`compileClientJava` 和 `build`；两版 API 识别冒烟测试分别输出 `WATERMeDIA 3.0.0.x MediaAPI` 与 `WATERMeDIA 3.0.1+ PlayerAPI`。Binaries 3.0.0 官方文件的 SHA-512 已校验。匹配组合的游戏内图片、视频、声音及 OpenGL/Vulkan 回归仍待执行。`3.0.0.23` 仅为初版兼容，未来可能移除。
 - 2026-11-14：修复 WATERMeDIA 图片首帧前 `GFXEngine.format() == null` 导致的 `Render Frame` 崩溃。错误报告中的 HTTPS 图片已经成功加载，崩溃与 HTTPS 无关；修复后 `compileJava`、`compileClientJava`、`build` 及两版 API 的 `format(null)` 冒烟测试均通过。另确认 OneScreen 接受 HTTP/HTTPS M3U8，WATERMeDIA 3.0.1 支持 HLS Master/Media Playlist、直播/VOD 探测和 FFmpeg HLS 解复用；IPTV 多频道列表当前只播放第一个源，实机回归待做。
 - 2026-11-14：紧凑编辑器在 OpenGL 3.3 与 Vulkan 1.4.329、856×512 窗口下完成实机回归；字段标签与输入框对齐，底部保存/取消和 ▶/⏸/⏹ 控件完整可见。播放、暂停、停止及停止后重新播放均进入预期状态；Vulkan 回归中发现并修复了停止后重播时的播放器空指针，关闭编辑器后游戏暂停会重新正确冻结媒体。
+- 2026-11-14：公开 GitHub 仓库、MIT 许可证、脱敏开发文档、CI 构建与标签自动发布工作流已配置；0.1.0 Release 由 Actions 成功生成主 JAR、源码 JAR 和 SHA-256 文件，下载后的双 WATERMeDIA API 冒烟测试通过。
