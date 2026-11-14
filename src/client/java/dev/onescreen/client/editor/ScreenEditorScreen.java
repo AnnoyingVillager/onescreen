@@ -13,6 +13,7 @@ import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
@@ -223,12 +224,17 @@ public final class ScreenEditorScreen extends Screen {
 
 		int controlLeft = contentLeft + PANEL_WIDTH - 40 - controlGroupWidth;
 		int controlTop = this.panelTop + 201;
-		this.refreshButton = this.addRenderableWidget(Button.builder(
+		this.refreshButton = this.addRenderableWidget(new ScaledGlyphButton(
+			controlLeft,
+			controlTop,
+			CONTROL_BUTTON_WIDTH,
+			WIDGET_HEIGHT,
 			Component.literal("↻"),
+			this.font,
+			2.0F,
 			pressed -> this.requestReload()
-		).bounds(controlLeft, controlTop, CONTROL_BUTTON_WIDTH, WIDGET_HEIGHT)
-			.tooltip(Tooltip.create(Component.translatable("onescreen.editor.control.refresh")))
-			.build());
+		));
+		this.refreshButton.setTooltip(Tooltip.create(Component.translatable("onescreen.editor.control.refresh")));
 		this.refreshButton.active = !this.urlValue.isBlank();
 		this.playButton = this.addPlaybackButton(
 			controlLeft + CONTROL_BUTTON_WIDTH + CONTROL_BUTTON_GAP,
@@ -475,6 +481,46 @@ public final class ScreenEditorScreen extends Screen {
 		}
 		ClientPlayNetworking.send(new ScreenReloadPayload(this.screenPos));
 		this.status = Component.translatable("onescreen.editor.refresh.requested");
+	}
+
+	private static final class ScaledGlyphButton extends Button {
+		private final Font font;
+		private final float glyphScale;
+
+		private ScaledGlyphButton(
+			final int x,
+			final int y,
+			final int width,
+			final int height,
+			final Component message,
+			final Font font,
+			final float glyphScale,
+			final OnPress onPress
+		) {
+			super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
+			this.font = font;
+			this.glyphScale = glyphScale;
+		}
+
+		@Override
+		protected void extractContents(
+			final GuiGraphicsExtractor graphics,
+			final int mouseX,
+			final int mouseY,
+			final float partialTick
+		) {
+			this.extractDefaultSprite(graphics);
+			float glyphWidth = this.font.width(this.getMessage()) * this.glyphScale;
+			float glyphHeight = this.font.lineHeight * this.glyphScale;
+			float x = this.getX() + (this.width - glyphWidth) * 0.5F;
+			float y = this.getY() + (this.height - glyphHeight) * 0.5F;
+			int color = this.active ? 0xFFFFFFFF : 0xFFA0A0A0;
+			graphics.pose().pushMatrix();
+			graphics.pose().translate(x, y);
+			graphics.pose().scale(this.glyphScale, this.glyphScale);
+			graphics.text(this.font, this.getMessage(), 0, 0, color, true);
+			graphics.pose().popMatrix();
+		}
 	}
 
 	private final class PlaybackSlider extends AbstractSliderButton {

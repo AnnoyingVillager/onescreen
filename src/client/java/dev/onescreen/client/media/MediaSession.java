@@ -176,13 +176,11 @@ final class MediaSession {
 		}
 		try {
 			String status = current.status();
-			boolean restarting = false;
 			switch (status) {
 				case "STOPPED", "ENDED" -> {
 					if (!current.start()) {
 						return false;
 					}
-					restarting = true;
 				}
 				case "PAUSED", "WAITING", "LOADING", "BUFFERING" -> current.resume();
 				case "ERROR" -> {
@@ -192,11 +190,10 @@ final class MediaSession {
 				}
 			}
 			this.manualPauseOverride = false;
-			if (!restarting) {
-				this.manuallyStopped = false;
-			}
+			this.manuallyStopped = false;
 			this.pauseRequested = false;
 			this.appliedPaused = false;
+			this.state = MediaState.LOADING;
 			return true;
 		} catch (RuntimeException exception) {
 			OneScreen.LOGGER.debug("Failed to play media at {}", this.key.pos(), exception);
@@ -236,6 +233,8 @@ final class MediaSession {
 			this.manuallyStopped = true;
 			this.pauseRequested = false;
 			this.appliedPaused = false;
+			this.state = MediaState.ENDED;
+			this.unregisterTexture();
 			return current.stop();
 		} catch (RuntimeException exception) {
 			OneScreen.LOGGER.debug("Failed to stop media at {}", this.key.pos(), exception);
@@ -243,11 +242,8 @@ final class MediaSession {
 		}
 	}
 
-	void clearManualPauseOverride() {
-		this.manualPauseOverride = null;
-	}
 	MediaSnapshot snapshot() {
-		if (!this.closed && this.state != MediaState.ERROR) {
+		if (!this.closed && !this.manuallyStopped && this.state != MediaState.ERROR) {
 			try {
 				this.updateVideoTexture();
 			} catch (RuntimeException exception) {
@@ -359,8 +355,6 @@ final class MediaSession {
 			this.fail("媒体解码失败", null);
 		} else if ("STOPPED".equals(status) && !this.closed && !this.manuallyStopped) {
 			this.fail("媒体播放器意外停止", null);
-		} else if (this.manuallyStopped && !"STOPPED".equals(status) && !"ENDED".equals(status)) {
-			this.manuallyStopped = false;
 		}
 	}
 
@@ -579,6 +573,9 @@ final class MediaSession {
 		}
 		if (this.state == MediaState.ERROR) {
 			return MediaState.ERROR;
+		}
+		if (this.manuallyStopped) {
+			return MediaState.ENDED;
 		}
 		if (!this.videoOutput) {
 			return this.textureRegistered ? MediaState.READY : this.state;

@@ -2,7 +2,7 @@
 
 ## 版本规则
 
-项目使用语义化版本，当前发布版本为 `0.1.1`。
+项目使用语义化版本，当前发布版本为 `0.1.2`。
 
 发布前需要同步修改：
 
@@ -36,9 +36,9 @@ build/libs/onescreen-<version>-sources.jar
 创建工作流：
 
 ```bash
-git tag -a v0.1.1 -m "OneScreen 0.1.1"
+git tag -a v0.1.2 -m "OneScreen 0.1.2"
 git push origin main
-git push origin v0.1.1
+git push origin v0.1.2
 ```
 
 标签版本必须与 `gradle.properties` 完全一致；不一致时发布工作流会失败。

@@ -27,8 +27,8 @@ Windows：
 
 构建输出位于 `build/libs/`：
 
-- `onescreen-0.1.1.jar`：正式模组文件。
-- `onescreen-0.1.1-sources.jar`：源码包。
+- `onescreen-0.1.2.jar`：正式模组文件。
+- `onescreen-0.1.2-sources.jar`：源码包。
 
 CI 只接受 JDK 25。使用 Java 21 会在 Fabric Loom 配置阶段失败。
 

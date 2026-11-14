@@ -7,7 +7,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 > [!IMPORTANT]
 > **This project is primarily developed with generative AI.** It is not an official Mojang, Fabric, or WATERMeDIA project and is not maintained by a mature commercial team. Code, documentation, build configuration, and troubleshooting notes are largely generated and organized by AI, while the human user provides requirements, testing environments, and in-game feedback. Back up your worlds and test new versions in a separate world first.
 
-> Current status: public test release `0.1.1`. Core screen rendering, the editor, image/video/audio playback, playback progress and live-stream refresh, six-direction placement, commands, networking, the dedicated creative tab, and both OpenGL and Vulkan rendering paths are implemented. Additional live-stream, stress, and multiplayer validation will continue in later versions.
+> Current status: public test release `0.1.2`. Core screen rendering, the editor, image/video/audio playback, playback progress and live-stream refresh, six-direction placement, commands, networking, the dedicated creative tab, and both OpenGL and Vulkan rendering paths are implemented. Additional live-stream, stress, and multiplayer validation will continue in later versions.
 
 > Download: [GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · Source and issue tracker: [GitHub repository](https://github.com/AnnoyingVillager/onescreen)
 

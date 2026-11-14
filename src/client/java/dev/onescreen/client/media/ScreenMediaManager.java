@@ -110,13 +110,6 @@ public final class ScreenMediaManager {
 
 	public void endEditing(final BlockPos pos) {
 		if (this.editingPos != null && this.editingPos.equals(pos)) {
-			ClientLevel currentLevel = this.level;
-			if (currentLevel != null) {
-				MediaSession session = this.sessions.get(new ScreenKey(currentLevel.dimension(), pos.immutable()));
-				if (session != null) {
-					session.clearManualPauseOverride();
-				}
-			}
 			this.editingPos = null;
 		}
 	}

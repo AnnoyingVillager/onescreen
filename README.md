@@ -7,7 +7,7 @@ OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模�
 > [!IMPORTANT]
 > **本项目是一个由生成式 AI 主导完成的项目。** 它不是 Mojang、Fabric、WATERMeDIA 或其作者的官方项目，也不是由成熟商业团队维护的产品。代码、文档、构建配置和排错记录主要由生成式 AI 生成与整理，人类用户提供需求、运行环境和实机反馈。使用前请备份世界；建议先在测试世界中验证。
 
-> 当前状态：`0.1.1` 公开测试版本。核心屏幕、编辑界面、图片/视频/声音、播放进度与直播追帧、六向朝向、命令、网络同步、专属创意栏及 OpenGL/Vulkan 渲染路径已实现；后续版本将继续补充直播流、压力和多人测试。
+> 当前状态：`0.1.2` 公开测试版本。核心屏幕、编辑界面、图片/视频/声音、播放进度与直播追帧、六向朝向、命令、网络同步、专属创意栏及 OpenGL/Vulkan 渲染路径已实现；后续版本将继续补充直播流、压力和多人测试。
 
 > 下载：[GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · 源码与问题反馈：[GitHub 仓库](https://github.com/AnnoyingVillager/onescreen)
 
