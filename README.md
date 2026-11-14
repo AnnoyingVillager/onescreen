@@ -1,5 +1,7 @@
 # OneScreen
 
+[English](README.en.md) | **简体中文**
+
 OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模组，可在世界中放置薄型画框并播放图片、视频和声音。
 
 > [!IMPORTANT]
