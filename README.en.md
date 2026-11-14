@@ -7,7 +7,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 > [!IMPORTANT]
 > **This project is primarily developed with generative AI.** It is not an official Mojang, Fabric, or WATERMeDIA project and is not maintained by a mature commercial team. Code, documentation, build configuration, and troubleshooting notes are largely generated and organized by AI, while the human user provides requirements, testing environments, and in-game feedback. Back up your worlds and test new versions in a separate world first.
 
-> Current status: public test release `0.1.2`. Core screen rendering, the editor, image/video/audio playback, playback progress and live-stream refresh, six-direction placement, commands, networking, the dedicated creative tab, and both OpenGL and Vulkan rendering paths are implemented. Additional live-stream, stress, and multiplayer validation will continue in later versions.
+> Current status: the latest public release is `0.2.0`, adding native-size FHD/4K support, WATERMeDIA GPU texture integration, and Vulkan queue synchronization.
 
 > Download: [GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · Source and issue tracker: [GitHub repository](https://github.com/AnnoyingVillager/onescreen)
 
@@ -27,7 +27,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 - Server-authoritative screen settings synchronized to clients.
 - Media sessions are closed when a chunk unloads, the player changes dimension, or the client disconnects.
 - A dedicated `OneScreen` creative tab.
-- Rendering that works with both Minecraft 26.2 OpenGL and Vulkan backends.
+- Rendering that works with both Minecraft 26.2 OpenGL and Vulkan backends. The 0.2 development line also supports WATERMeDIA GPU textures with an AWT CPU-texture fallback.
 
 ## Compatibility
 
@@ -37,21 +37,25 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 | Java | 25 | 25 |
 | Fabric Loader | 0.18.6 | Minimum 0.18.0 |
 | Fabric API | 0.152.0+26.2 | Minimum 0.152.0+26.2 |
-| WATERMeDIA | 3.0.0.23 | 3.0.0.23 and 3.0.1 |
-| WATERMeDIA Binaries | 3.0.0.6 | Paired with 3.0.0.23 for legacy clients; use 3.0.1 for current clients |
+| WATERMeDIA | 3.0.0 | 3.0.x; `3.0.0.x` test builds rank below formal `3.0.0` and are best-effort only |
+| WATERMeDIA Binaries | 3.0.0 | Must match the WATERMeDIA release line |
 
-WATERMeDIA 3.0.0.23 and 3.0.1 use different public Java package layouts. OneScreen contains a reflective compatibility layer, so the same OneScreen JAR can detect and use either API layout.
+WATERMeDIA version ordering differs from a conventional four-component version:
 
-> **Legacy compatibility:** WATERMeDIA `3.0.0.23` has initial compatibility only. Support may be removed in a future release if its maintenance cost becomes unreasonable. New installations should prefer `3.0.1`.
+```text
+3.0.0.23 < 3.0.0 < 3.0.1 < 3.0.2
+```
+
+`3.0.0` is the current formal baseline, `3.0.0.x` is treated as a test build, and `3.0.x` with x > 0 ranks above the baseline. OneScreen declares `>=3.0.0.0 <3.1.0` in Fabric metadata and performs a second runtime compatibility check.
 
 ### Recommended combinations
 
 | Use case | WATERMeDIA | WATERMeDIA Binaries |
 |---|---|---|
-| Early 26.2 client | 3.0.0.23 | [3.0.0.6](https://www.curseforge.com/minecraft/mc-mods/watermedia-binaries/files/8519058) |
-| Current 26.2 client | 3.0.1 | 3.0.1 |
+| Current stable setup | `3.0.0` | `3.0.0` |
+| Future formal 3.0.x release | Matching `3.0.x` | The matching Binaries release specified by WATERMeDIA |
 
-Use only the combinations listed above. WATERMeDIA `3.0.0.23` corresponds to WATERMeDIA Binaries `3.0.0.6`. A mismatch can prevent the media engine from initializing.
+Always follow WATERMeDIA's published pairing. `3.0.0.x` test builds may load through the compatibility layer, but they are not the primary target for new features or formal testing.
 
 ## Required dependencies
 
@@ -100,19 +104,19 @@ The integrated server and dedicated servers can increase these limits up to `409
 Common commands:
 
 ```text
-/screen set <url>
-/screen size <width> <height>
-/screen renderdistance <blocks>
-/screen audiodistance <blocks>
-/screen align <top_left|up|top_right|left|center|right|bottom_left|down|bottom_right>
-/screen fitmode <fit|stretch|tile|fill|center>
-/screen rotation <pos> <-180..180>
-/screen hideframe <pos> <true|false>
-/screen volume <0.0-1.0>
-/screen mute <true|false>
-/screen loop <true|false>
-/screen reload
-/screen info
+/screen set <x> <y> <z> <url>
+/screen size <x> <y> <z> <width> <height>
+/screen renderdistance <x> <y> <z> <blocks>
+/screen audiodistance <x> <y> <z> <blocks>
+/screen align <x> <y> <z> <top_left|up|top_right|left|center|right|bottom_left|down|bottom_right>
+/screen fitmode <x> <y> <z> <fit|stretch|tile|fill|center>
+/screen rotation <x> <y> <z> <-180..180>
+/screen hideframe <x> <y> <z> <true|false>
+/screen volume <x> <y> <z> <0.0-1.0>
+/screen mute <x> <y> <z> <true|false>
+/screen loop <x> <y> <z> <true|false>
+/screen reload <x> <y> <z>
+/screen info <x> <y> <z>
 /screen config debug <on|off>
 ```
 
@@ -145,31 +149,34 @@ Artifacts are written to `build/libs/`. GitHub Actions builds every push and pul
 - HLS live streams cannot be seeked with the progress bar. Only an approximate current-segment progress value is shown.
 - Rotation accepts `-180°` through `180°`, which covers every in-plane orientation. Hiding the frame removes only the static model; the screen block and media interaction area remain.
 - Enabling live-stream refresh may cause a short black frame, buffering delay, or audio restart because the player is reopened.
-- The primary video path still copies CPU frames into a Minecraft dynamic texture. 4K/8K high-frame-rate playback is not a default performance promise.
+- Version 0.2 prefers WATERMeDIA OpenGL/Vulkan GPU textures and falls back to CPU frame copying when GPU initialization is unavailable. Whether 4K/8K uses hardware decoding and remains smooth depends on the source, codecs, GPU, drivers, and WATERMeDIA. OneScreen no longer imposes a fixed 1080p cap, but it does not promise unrestricted high-frame-rate 4K/8K performance.
 - Multi-channel IPTV playlists currently use only the first source.
 - Public live streams have not yet received extensive long-duration and reconnect testing.
 - Generative-AI-led projects may contain edge cases not covered by the current test matrix. When reporting a problem, include `latest.log`, WATERMeDIA logs, and reproduction steps with private data removed.
 
 ## Documentation
 
+### Human usage and development documentation
+
 - [Scope and acceptance criteria](docs/SCOPE.md)
-- [Project plan](docs/PROJECT_PLAN.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Version and API constraints](docs/API-VERSIONS.md)
-- [Rendering](docs/RENDERING.md)
-- [Media and audio](docs/MEDIA-AUDIO.md)
-- [Video handling guide](docs/VIDEO-HANDLING-AGENT-GUIDE.md)
+- [Rendering implementation](docs/RENDERING.md)
+- [Media, GPU textures, and audio](docs/MEDIA-AUDIO.md)
+- [High-resolution and hardware decoding](docs/HIGH-RESOLUTION-MEDIA.md)
 - [Networking and commands](docs/NETWORK-SYNC.md)
 - [Configuration](docs/CONFIGURATION.md)
 - [Command reference](docs/COMMAND-REFERENCE.md)
 - [Testing](docs/TESTING.md)
-- [Milestones](docs/MILESTONES.md)
 - [Architecture decisions](docs/DECISIONS.md)
 - [Risk register](docs/RISKS.md)
-- [AI workflow](docs/AI-WORKFLOW.md)
 - [Development and verification](docs/DEVELOPMENT.md)
 - [Publishing](docs/PUBLISHING.md)
 - [Changelog](CHANGELOG.md)
+
+### Maintenance handoff
+
+- [Agent onboarding](agents/README.md)
 
 ## License
 

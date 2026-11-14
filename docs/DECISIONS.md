@@ -38,7 +38,7 @@ WATERFrAMES 的 Fabric 分支包含 CreativeCore GUI、旧 WATERMeDIA 2 媒体�
 
 ## ADR-003：第一版不使用 Mixin 或 access widener
 
-- 状态：Accepted
+- 状态：Superseded by ADR-022（仅允许 Vulkan 队列同步所需的窄范围 Mixin）
 - 日期：2026-11-13
 
 ### 决定
@@ -108,6 +108,7 @@ WATERFrAMES 的 Fabric 分支包含 CreativeCore GUI、旧 WATERMeDIA 2 媒体�
 
 - 安全性更高。
 - 本地文件支持推迟到专门处理 `water://local/` 路径边界的版本。
+
 ## ADR-008：将 Loom 固定为 1.19.4
 
 - 状态：Accepted
@@ -126,6 +127,7 @@ Fabric 官方 26.2 模板声明 `1.19-SNAPSHOT`。首次成功配置构建时，
 - 当前构建可重复解析到同一 Loom 版本。
 - 升级 Loom 时必须单独验证 Minecraft 26.2 项目配置和客户端/服务端启动。
 - 发布前继续记录最终解析版本。
+
 ## ADR-009：26.2 使用全局 BlockEntity 渲染与扩展距离
 
 - 状态：Accepted
@@ -171,9 +173,10 @@ M5 的静态图片使用 WATERMeDIA 公共 `HeadlessGFXEngine`：
 - 静态图片只做一次 CPU 像素复制，PNG、JPEG、WebP 均已实机通过。
 - 该方案不适合逐帧视频的持续 CPU 拷贝；M6 必须单独实现按帧更新或公开后端纹理桥接，并根据性能测试选择方案。
 - 每个屏幕仍保持一个稳定纹理 `Identifier`，播放器与会话生命周期独立关闭。
+
 ## ADR-011：M6 使用软件视频引擎与 Java Sound 实现后端无关播放
 
-- 状态：Accepted
+- 状态：Superseded in part by ADR-023（AWT 仍作为 CPU 回退）
 - 日期：2026-11-13
 
 ### 背景
@@ -200,6 +203,7 @@ M6 对视频使用公开 `PlayerAPI.awtEngine(...)`：
 - 不引用 `GL11`、`GlTexture`、Vulkan 原生句柄、Mixin 或 access widener。
 - 视频路径包含解码输出、ARGB 转换和 `NativeImage` 写入，CPU 成本高于 GPU 直通；M8 需要用多屏幕和 30 分钟运行测试确认上限。
 - Java Sound 是客户端本地立体声输出，不提供 OpenAL 的位置声像；首版只实现需求中的距离音量衰减。
+
 ## ADR-012：六向薄画框必须让模型与媒体四边形同面
 
 - 状态：Accepted
@@ -241,9 +245,11 @@ M6 对视频使用公开 `PlayerAPI.awtEngine(...)`：
 
 - 屏幕画框只从 OneScreen 专属栏取得，后续模组物品也应优先加入该栏。
 - 新增物品时必须同时确认专用栏与搜索页中的可见性。
+
 ## ADR-014：视频默认 720p，分阶段验证 LOD、批量复制与硬解
 
-- 状态：Accepted
+- 历史说明：本节记录 0.1.x 设计，不再代表 0.2 的固定上限策略。
+- 状态：Superseded by ADR-023
 - 日期：2026-11-14
 
 ### 背景
@@ -265,11 +271,11 @@ WATERFrAMES 1.21.1 参考实现会把媒体源分辨率交给 OpenGL 纹理。WA
 - 720p 保持不变，优先级是先降低逐像素处理成本并验证 1080p。
 - 玩家远离屏幕时降低输出和上传成本，但不得在边界反复重建纹理。
 - 4K/8K 只能是实验能力；要发布支持承诺，必须完成硬解、软解、OpenGL、Vulkan、多屏和 30 分钟测试。
-- 具体实施步骤、伪代码和验收矩阵见 `docs/VIDEO-HANDLING-AGENT-GUIDE.md`。
+- 0.2 已用 GPU 纹理路径和动态 LOD 取代本 ADR 的固定 1280x720 策略；历史实施细节不再单独维护。
 
 ## ADR-015：同一 JAR 通过反射兼容 WATERMeDIA 3.0.0.23 与 3.0.1
 
-- 状态：Accepted
+- 状态：Superseded in part by ADR-024（兼容层保留，正式基线改为 3.0.0）
 - 日期：2026-11-14
 
 ### 背景
@@ -282,14 +288,15 @@ WATERMeDIA `3.0.0.23` 的玩家 API 位于 `org.watermedia.api.media`，`3.0.1` 
 - 启动时优先检测 `PlayerAPI`；未找到时回退到旧版 `MediaAPI`。
 - MRL、图像/音频引擎、播放器工厂、播放控制和尺寸设置全部通过公开反射调用。
 - 传给播放器的图形引擎 supplier 必须返回 WATERMeDIA 原生 `GFXEngine` 对象，不能返回 OneScreen 的包装对象。
-- `3.0.0.23` 只做初版兼容；后续可按维护成本移除，新安装优先使用 `3.0.1`。
+- 旧 `3.0.0.x` 测试版只保留 best-effort 兼容；正式测试目标为 WATERMeDIA `3.0.0` 及后续 `3.0.x`。
 
 ### 影响
 
 - 同一个 OneScreen JAR 可同时支持两套 WATERMeDIA 包布局。
 - 反射调用缺少编译期签名检查，因此升级 WATERMeDIA 时必须运行双版本冒烟测试。
-- 两版必须使用对应组合：WATERMeDIA `3.0.0.23` + Binaries `3.0.0.6`，或 WATERMeDIA `3.0.1` + Binaries `3.0.1`；OneScreen 不打包原生库。
-- 已在 `3.0.0.23` 上完成编译、构建和 API 识别冒烟测试，并在 `3.0.1` 上完成 API 识别冒烟测试。
+- 当前正式组合为 WATERMeDIA `3.0.0` + Binaries `3.0.0`；更早的 `3.0.0.x` + `3.0.0.6` 仅作 best-effort 兼容。OneScreen 不打包原生库。
+- 已完成旧测试版 API 识别冒烟；0.2 的正式构建与沙箱运行基线为 WATERMeDIA `3.0.0`。
+
 ## ADR-016：媒体引擎首帧前的空格式是合法状态
 
 - 状态：Accepted
@@ -383,7 +390,7 @@ WATERMeDIA 3.0.1 在图片引擎尚未上传第一帧时，`GFXEngine.format()` 
 - 直播追帧会产生一次短暂缓冲/黑屏和音频重新初始化，这是默认关闭的原因。
 - HLS 片段进度是目标时长近似值，不暴露或承诺精确的 HLS 媒体序列号。
 - 循环状态现在可从 GUI 保存，服务端 `/screen loop` 仍保持兼容。
-- 新增功能仍需在 WATERMeDIA `3.0.1` 和 `3.0.0.23`、OpenGL 与 Vulkan 下完成实机回归。
+- 新功能以 WATERMeDIA `3.0.0` 及后续 `3.0.x` 为主要验收目标；旧 `3.0.0.x` 只做 best-effort 回归。OpenGL 与 Vulkan 仍需分别验证。
 
 ## ADR-020：紧凑编辑器布局与显式播放控制状态
 
@@ -433,3 +440,84 @@ WATERMeDIA 3.0.1 在图片引擎尚未上传第一帧时，`GFXEngine.format()` 
 - 隐藏画框不会破坏方块或移除媒体；玩家仍可在原薄型点击区域右键打开编辑器。
 - `-180..180` 已覆盖所有平面朝向。后续若允许无限角度输入，应在写入前规范化并表示当前等价角度。
 - 新增设置必须继续同时更新服务端校验、GUI payload、BlockEntity 持久化和发布文档。
+
+## ADR-022：Vulkan GPU 纹理共享 Minecraft graphics queue，并以 Mixin 串行化
+
+- 状态：Accepted
+- 日期：2026-11-15
+
+### 背景
+
+WATERMeDIA `VKEngine` 的纹理发布假定媒体写入和消费者采样发生在同一 Vulkan graphics queue。0.2 初版桥接使用了独立 compute/transfer queue，却没有跨队列 semaphore，导致 4K 播放约 2 秒后出现 `VK_ERROR_DEVICE_LOST`。
+
+### 决定
+
+- `WaterMediaVulkanContext.queue()` 返回 Minecraft `graphicsQueue()`。
+- `VulkanQueueSynchronization` 按原生 `VkQueue` 句柄提供统一锁。
+- `VulkanQueueSubmissionMixin`、`VulkanQueueMixin`、`VulkanGpuSurfaceMixin` 分别锁住 Minecraft 提交、等待和呈现。
+- 不删除这些 Mixin，也不改回独立队列，除非提供完整的跨队列同步实现并通过设备丢失压力测试。
+
+### 影响
+
+- WATERMeDIA GPU 纹理与 Minecraft 使用同一队列和同一锁，满足外部同步要求。
+- 这是项目当前唯一允许的 Mixin 区域。
+- Minecraft 或 WATERMeDIA 升级后必须重新确认注入目标和 4K 连续播放。
+
+## ADR-023：取消固定视频分辨率上限，保留距离 LOD
+
+- 状态：Accepted
+- 日期：2026-11-15
+
+### 背景
+
+0.1.x 将视频限制为 1280x720/1080p 实验档位，避免 CPU 拷贝失控。0.2 接入 GPU 纹理后，继续在 OneScreen 侧固定 max size 会阻断 WATERMeDIA 根据片源和设备选择更高分辨率。
+
+### 决定
+
+- 删除 `VIDEO_MAX_WIDTH`、`VIDEO_MAX_HEIGHT` 和播放器 `maxSize(...)` 限制。
+- 保留 `VideoLod`，按屏幕距离比例选择上传档位，并带迟滞。
+- 近距离 `LOD=MAX` 允许源尺寸。
+- 硬解/软解策略交给 WATERMeDIA、FFmpeg、GPU、驱动和片源决定。
+- GPU 纹理路径失败时回退 AWT CPU 路径。
+
+### 影响
+
+- 4K 纹理可以按 `3840x2160` 输出。
+- `format=GPU` 不等于硬解；`hardwareAccel=false` 时仍可能稳定使用 GPU 纹理上传。
+- 4K/8K 高帧率性能仍需按设备压测，不能作无条件承诺。
+
+## ADR-024：WATERMeDIA 以 3.0.0 为正式基线
+
+- 状态：Accepted
+- 日期：2026-11-15
+
+### 决定
+
+- 正式基线为 WATERMeDIA `3.0.0`，Binaries `3.0.0`。
+- `3.0.0.x` 是低于 `3.0.0` 的测试版本。
+- `3.0.x`（x > 0）是高于所有 `3.0.0.x` 的正式版本。
+- 加载器声明 `>=3.0.0.0 <3.1.0`，运行时由 `WaterMediaVersion` 做特殊排序。
+- 旧 `3.0.0.x` 包布局只保留 best-effort 兼容，不再作为新功能的主要目标。
+
+### 影响
+
+- 不能直接使用普通四段版本比较器。
+- 所有 WATERMeDIA 玩家 API 差异仍集中在 `WaterMediaCompat`。
+- 升级 WATERMeDIA 时必须检查实际包布局、Binaries 配套和沙箱运行日志。
+
+## ADR-025：Agent 文档与人类文档分离
+
+- 状态：Accepted
+- 日期：2026-11-15
+
+### 决定
+
+- `agents/` 保存 Agent 入口、项目上下文、开发日志和执行手册。
+- 根 `README.md`、`README.en.md` 和 `docs/` 面向人类用户与二次开发者，说明安装、使用、架构、渲染、媒体、网络和测试原理。
+- 根 `AGENTS.md` 只保留自动发现所需的最小导航，不复制详细规则。
+
+### 影响
+
+- 新 Agent 按 `agents/README.md` 的固定顺序阅读即可上手。
+- 人类文档不反复维护“给下一个 AI 的交接步骤”。
+- 文档链接变化后必须全仓搜索旧文件名，避免保留失效路径。

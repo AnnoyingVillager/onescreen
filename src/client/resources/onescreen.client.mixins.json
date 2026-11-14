@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "dev.onescreen.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"VulkanGpuSurfaceMixin",
+		"VulkanQueueMixin",
+		"VulkanQueueSubmissionMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

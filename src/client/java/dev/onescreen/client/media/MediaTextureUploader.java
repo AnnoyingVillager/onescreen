@@ -7,7 +7,10 @@ import com.mojang.blaze3d.textures.FilterMode;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.util.ARGB;
 
 /**
  * Copies WATERMeDIA CPU frames into a Minecraft-owned dynamic texture.
@@ -99,34 +102,36 @@ final class MediaTextureUploader {
 		if (pixels.remaining() < required) {
 			throw new IllegalArgumentException("Frame buffer is too small: " + pixels.remaining() + " < " + required);
 		}
-
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < width; x++) {
-				int offset = base + (y * width + x) * bytesPerPixel;
-				int red;
-				int green;
-				int blue;
-				switch (format) {
-					case GRAY -> red = green = blue = pixels.get(offset) & 0xFF;
-					case RGB -> {
-						red = pixels.get(offset) & 0xFF;
-						green = pixels.get(offset + 1) & 0xFF;
-						blue = pixels.get(offset + 2) & 0xFF;
-					}
-					case RGBA -> {
-						red = pixels.get(offset) & 0xFF;
-						green = pixels.get(offset + 1) & 0xFF;
-						blue = pixels.get(offset + 2) & 0xFF;
-					}
-					case BGRA -> {
-						blue = pixels.get(offset) & 0xFF;
-						green = pixels.get(offset + 1) & 0xFF;
-						red = pixels.get(offset + 2) & 0xFF;
-					}
-					default -> throw new IllegalArgumentException("Unsupported image pixel format: " + format);
+		IntBuffer targetPixels = target.getPixelBytes().order(ByteOrder.nativeOrder()).asIntBuffer();
+		for (int index = 0; index < width * height; index++) {
+			int offset = base + index * bytesPerPixel;
+			int alpha = 0xFF;
+			int red;
+			int green;
+			int blue;
+			switch (format) {
+				case GRAY -> red = green = blue = pixels.get(offset) & 0xFF;
+				case RGB -> {
+					red = pixels.get(offset) & 0xFF;
+					green = pixels.get(offset + 1) & 0xFF;
+					blue = pixels.get(offset + 2) & 0xFF;
 				}
-				target.setPixel(x, y, 0xFF000000 | red << 16 | green << 8 | blue);
+				case RGBA -> {
+					red = pixels.get(offset) & 0xFF;
+					green = pixels.get(offset + 1) & 0xFF;
+					blue = pixels.get(offset + 2) & 0xFF;
+					alpha = pixels.get(offset + 3) & 0xFF;
+				}
+				case BGRA -> {
+					blue = pixels.get(offset) & 0xFF;
+					green = pixels.get(offset + 1) & 0xFF;
+					red = pixels.get(offset + 2) & 0xFF;
+					alpha = pixels.get(offset + 3) & 0xFF;
+				}
+				default -> throw new IllegalArgumentException("Unsupported image pixel format: " + format);
 			}
+			int argb = alpha << 24 | red << 16 | green << 8 | blue;
+			targetPixels.put(index, ARGB.toABGR(argb));
 		}
 	}
 
@@ -149,11 +154,9 @@ final class MediaTextureUploader {
 		if (pixels.length < required) {
 			throw new IllegalArgumentException("Video pixel buffer is too small: " + pixels.length + " < " + required);
 		}
-		int index = 0;
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < width; x++) {
-				target.setPixel(x, y, pixels[index++]);
-			}
+		IntBuffer targetPixels = target.getPixelBytes().order(ByteOrder.nativeOrder()).asIntBuffer();
+		for (int index = 0; index < required; index++) {
+			targetPixels.put(index, ARGB.toABGR(pixels[index]));
 		}
 	}
 

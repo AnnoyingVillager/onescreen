@@ -2,6 +2,21 @@
 
 本项目遵循语义化版本。发布日期使用本地日期 `YYYY-MM-DD`。
 
+## [0.2.0] - 2026-11-15
+
+高分辨率媒体与 GPU 纹理更新。
+
+### 新增与改进
+
+- OneScreen 不再固定将视频输出限制为 `1920x1080`；近距离 `LOD=MAX` 时由 WATERMeDIA 根据源、编解码器和设备能力选择尺寸。
+- OpenGL 接入 WATERMeDIA GPU 纹理，Vulkan 接入 `VKEngine`、Minecraft Vulkan device 和外部纹理视图。
+- 保留 AWT CPU 纹理回退，并优化视频像素到 `NativeImage` 的批量复制。
+- 新增 `VideoLod`，按距离降档并使用阈值迟滞。
+- WATERMeDIA 构建基线更新为 `3.0.0`，Binaries 更新为 `3.0.0`；新增 `3.0.0.x < 3.0.0 < 3.0.x` 的特殊版本排序。
+- 修复 Vulkan 共享 graphics queue 的提交/等待/呈现同步。此前独立 compute/transfer queue 会导致 `VK_ERROR_DEVICE_LOST`。
+- 沙箱实测 1080p 使用硬件解码；4K AV1 10-bit HLG 由 WATERMeDIA 选择软解但 GPU 纹理上传正常。
+- Agent 文档统一迁移到 `agents/`，README 与 `docs/` 重新整理为人类使用说明和二次开发实现原理。
+
 ## [0.1.2] - 2026-11-14
 
 播放控制与图标修正。
@@ -17,6 +32,8 @@
 
 - 保持 WATERMeDIA `3.0.0.23` + Binaries `3.0.0.6` 与 WATERMeDIA `3.0.1` + Binaries `3.0.1` 的运行兼容。
 - 对 WATERMeDIA `3.0.0.23` 仍仅提供初版兼容，未来可能移除。
+
+[0.2.0]: https://github.com/AnnoyingVillager/onescreen/releases/tag/v0.2.0
 
 [0.1.2]: https://github.com/AnnoyingVillager/onescreen/releases/tag/v0.1.2
 

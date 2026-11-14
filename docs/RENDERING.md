@@ -1,17 +1,10 @@
-# 26.2 屏幕渲染设计
+# 26.2 屏幕渲染实现
 
 ## 目标
 
-用 26.2 的渲染状态与提交体系在方块位置显示动态四边形。第一版先渲染固定占位纹理，确认位置和尺寸正确后再接媒体纹理。
+OneScreen 使用 Minecraft 26.2 的 render-state extraction 与 `SubmitNodeCollector` 在方块位置提交动态媒体四边形。渲染器不直接管理播放器，也不在绘制阶段下载、解码或创建纹理。
 
-## 为什么使用 BlockEntityRenderer
-
-- 屏幕随方块实体加载和卸载。
-- 可以利用 Minecraft 的视野剔除和渲染距离。
-- 不需要全局世界渲染事件或每帧扫描。
-- 后续可以保存宽高、朝向等方块实体数据。
-
-## 渲染类结构
+## 渲染链路
 
 ```text
 ScreenBlockEntity
@@ -19,176 +12,144 @@ ScreenBlockEntity
 ScreenRenderState
   -> submit
 ScreenRenderer
+  -> submitCustomGeometry
   -> SubmitNodeCollector
 ```
 
-渲染器不能再直接使用旧的：
+`ScreenRenderer` 实现：
 
 ```java
-render(entity, partialTick, pose, MultiBufferSource, light, overlay)
+BlockEntityRenderer<ScreenBlockEntity, ScreenRenderState>
 ```
 
-## 渲染状态
+它不实现旧版的即时绘制签名，也不复制过时的 `PoseStack + MultiBufferSource` 渲染模式。
 
-```java
-public final class ScreenRenderState extends BlockEntityRenderState {
-    public Direction facing;
-    public float width;
-    public float height;
-    public float brightness;
-    public float alpha;
-    public boolean hasMediaTexture;
-    public long mediaTextureHandle;
-    public MediaVisualState mediaState;
-}
+## `ScreenRenderState`
+
+每帧快照包含：
+
+- `facing`
+- `alignment`
+- `fitMode`
+- `rotationDegrees`
+- `width` / `height`
+- `renderDistance`
+- `hasUrl`
+- 当前 `mediaTexture` / `mediaRenderType`
+- `mediaWidth` / `mediaHeight`
+- `mediaState`
+
+`extractRenderState` 只能读取 BlockEntity 和 `MediaSnapshot`。不得在提取阶段阻塞、启动播放器、发起 HTTP 请求或修改全局渲染状态。
+
+## 媒体提交
+
+`submit` 分两种情况：
+
+1. 有媒体纹理：根据媒体宽高与 `ScreenFitMode` 计算四边形尺寸和 UV。
+2. 无媒体纹理：debug 关闭时直接不提交；debug 开启时提交 `screen_front.png` 占位材质。
+
+媒体使用 `RenderTypes.entityCutout(...)`，并采用：
+
+- 全亮烘焙光 `0x00F000F0`。
+- `OverlayTexture.NO_OVERLAY`。
+- 正常面法线。
+- 错误状态红色 tint。
+
+## 四边形几何
+
+屏幕使用六个方向：
+
+- `NORTH`
+- `SOUTH`
+- `EAST`
+- `WEST`
+- `UP`
+- `DOWN`
+
+`ScreenGeometry.right(facing, rotation)` 与 `up(facing, rotation)` 为当前屏幕平面提供右手基向量。`submitQuad` 再完成：
+
+1. 以方块中心为锚点。
+2. 沿 `facing` 反方向移动到薄面表面。
+3. 应用九宫格水平/垂直偏移。
+4. 按半宽、半高生成四个角。
+5. 用统一的 `u0/v0/u1/v1` 提交 UV。
+
+当前表面偏移常量为 `SURFACE_OFFSET = 0.4365`。`UP`/`DOWN` 不能复用水平面的 UV 顺序；历史上曾出现宽面贴图落在同方块另一侧、上下方向 UV 反向和窄边缺失的问题，六向修改后必须分别实机检查。
+
+## 九宫格偏移
+
+`ScreenAlignment` 提供：
+
+```text
+top_left, up, top_right
+left, center, right
+bottom_left, down, bottom_right
 ```
 
-不把 `BlockEntity`、`MediaPlayer` 或可变 Java 集合放进状态对象。
+`ScreenGeometry.horizontalOffset` 和 `verticalOffset` 使用屏幕自身宽高计算偏移。旋转时偏移方向跟随屏幕平面基向量，因此九宫格布局会随画面一起旋转，而不会留在世界坐标轴上。
 
-## 提取状态
+## 画面适配
 
-```java
-@Override
-public ScreenRenderState createRenderState() {
-    return new ScreenRenderState();
-}
+`ScreenFitGeometry.calculate(...)` 返回四边形尺寸和 UV：
 
-@Override
-public void extractRenderState(
-        ScreenBlockEntity entity,
-        ScreenRenderState state,
-        float tickProgress,
-        Vec3 cameraPos,
-        ModelFeatureRenderer.CrumblingOverlay crumblingOverlay
-) {
-    super.extractRenderState(entity, state, tickProgress, cameraPos, crumblingOverlay);
+| 模式 | 实现 |
+|---|---|
+| `fit` | contain：保持比例并完整显示。 |
+| `stretch` | 填满屏幕，不保持比例。 |
+| `tile` | 四边形填满屏幕，UV 按“媒体长边 1 格”重复。 |
+| `fill` | cover：保持比例，裁剪超出的 UV。 |
+| `center` | 按“媒体长边 1 格”的自然尺寸居中。 |
 
-    state.facing = entity.getBlockState().getValue(ScreenBlock.FACING);
-    state.width = entity.getScreenWidth();
-    state.height = entity.getScreenHeight();
-    state.brightness = entity.getBrightness();
-    state.alpha = entity.getAlpha();
+`tile` 的 UV 可以超过 `1.0`，依赖 Minecraft 纹理采样器的重复行为。验证时必须检查接缝、透明像素和非整数平铺比例。
 
-    MediaSnapshot media = clientMediaManager.snapshot(entity.getBlockPos());
-    state.hasMediaTexture = media.hasTexture();
-    state.mediaTextureHandle = media.textureHandle();
-    state.mediaState = media.visualState();
-}
-```
+## 距离剔除
 
-`extractRenderState` 只能读取或生成快照，不得阻塞、下载或启动播放器。
+`ScreenRenderer.shouldRender` 使用：
 
-## 坐标与变换
+- 屏幕媒体中心。
+- 当前摄像机位置。
+- 屏幕配置的 `renderDistance`。
+- 屏幕显示半径。
 
-约定：
+只有媒体中心到摄像机的距离小于“渲染距离 + 显示半径”时才提交几何。`getViewDistance()` 使用硬上限 `4096`，避免超过服务端允许范围后 renderer 提前剔除。实际可见性仍受客户端区块视距和服务端区块加载限制。
 
-- 方块局部坐标范围为 `[0, 1]`。
-- 屏幕中心为方块中心附近。
-- 屏幕正面由 `FACING` 决定。
-- 四边使用 `width` 和 `height` 个方块单位。
-- 当前支持水平四向和 `UP` / `DOWN`；媒体可在所在平面内按 `rotationDegrees` 连续旋转。
+26.2 当前目标没有此处可覆盖的旧版 `getRenderBoundingBox` 方法。不要复制旧版本签名；超大屏和贴边视角仍需实机确认。
 
-伪代码：
+## 透明与 Debug
 
-```java
-private void transform(PoseStack pose, ScreenRenderState state) {
-    pose.translate(0.5, 0.5, 0.5);
-    pose.mulPose(rotationForFacing(state.facing));
-    pose.translate(-state.width * 0.5f, -state.height * 0.5f, 0.501f);
-}
-```
+- 无媒体且 `/screen config debug off`：不提交显示区域，屏幕视觉透明。
+- 无媒体且 debug on：提交占位材质，便于定位方块与贴图方向。
+- 静态画框模型由 block model 控制；`hideFrame=true` 时 `ScreenBlock.getRenderShape()` 返回不可见。
+- 隐藏画框不会删除 BlockEntityRenderer 的媒体面或方块点击区域。
+- 媒体错误只改变 tint 和状态，不应每帧刷错误日志。
 
-必须验证：
+## 平面旋转
 
-- 北、东、南、西的贴图方向。
-- 从正面看纹理没有镜像。
-- 从背面不会因错误面绕序而闪烁。
-- 大屏幕不会进入相邻方块。
+旋转范围 `-180°` 到 `180°`，覆盖屏幕平面内的所有角度。实现只旋转屏幕平面基向量，不引入完整三维欧拉旋转：
 
-## 提交流程
+- 媒体四边形跟随基向量旋转。
+- 九宫格偏移跟随基向量旋转。
+- 声音中心使用同一几何计算。
+- `FACING` 仍决定方块贴附面。
 
-```java
-@Override
-public void submit(
-        ScreenRenderState state,
-        PoseStack pose,
-        SubmitNodeCollector collector,
-        CameraRenderState cameraState
-) {
-    pose.pushPose();
-    transform(pose, state);
+## 纹理来源
 
-    if (state.hasMediaTexture) {
-        submitMediaQuad(pose, collector, state);
-    } else {
-        submitPlaceholderQuad(pose, collector, state);
-    }
+`ExternalMediaTexture` 为 Minecraft 提供统一 `GpuTextureView` 外观：
 
-    pose.popPose();
-}
-```
+- OpenGL view 动态读取 WATERMeDIA 当前 GL texture id。
+- Vulkan view 动态读取 WATERMeDIA 当前 `VkImageView`。
+- CPU 回退使用 `DynamicTexture`。
+- WATERMeDIA 拥有底层图像资源；OneScreen 只管理包装 view 和注销顺序。
 
-`submitMediaQuad` 的精确纹理类型必须匹配 WATERMeDIA 3 和 26.2 的后端抽象。不要直接把 OpenGL texture id 写死到所有图形后端。
+GPU 纹理句柄、Vulkan 队列锁和资源退休详见 [媒体、GPU 纹理与音频](MEDIA-AUDIO.md)。
 
-## 渲染包围盒
+## 修改渲染代码后的验收
 
-大屏幕可能远超一个方块。需要根据朝向和尺寸扩展 AABB：
-
-```java
-@Override
-public AABB getRenderBoundingBox(ScreenBlockEntity entity) {
-    AABB base = new AABB(entity.getBlockPos());
-    return expandForScreen(base, entity.getFacing(), entity.getScreenWidth(), entity.getScreenHeight());
-}
-```
-
-验收：
-
-- 摄像机接近包围盒边缘时屏幕不会突然消失。
-- 屏幕无论宽度或高度较大都能完整渲染。
-- 包围盒计算不会随帧无限分配大量对象；如有必要可缓存。
-
-## 材质与透明
-
-第一版推荐：
-
-- 正面：动态媒体四边形。
-- 背面：深色外壳。
-- 透明通道：固定启用或由配置决定，不要每帧切换全局渲染状态。
-- 光照：默认全亮或固定亮度，避免媒体黑屏。
-- 混合模式：使用稳定的 Translucent 渲染路径。
-
-第一版不实现：
-
-- 双面同时播放。
-- 投影仪。
-- 可破碎模型的精细 overlay。
-- 任意三维旋转。
-
-## 占位状态
-
-以下状态要有明显但轻量的占位图：
-
-- 未设置 URL。
-- 正在解析。
-- 正在加载。
-- 不支持格式。
-- 网络错误。
-- 音频已播放但没有视频帧。
-
-错误占位内容不要每帧打印日志。
-
-## 官方参考
-
-- Fabric Block Entity Renderers: https://docs.fabricmc.net/develop/blocks/block-entity-renderer
-- Fabric Block Entities: https://docs.fabricmc.net/develop/blocks/block-entities
-- NeoForge 26.2 渲染变更: https://docs.neoforged.net/primer/docs/26.2/
-
-## 0.1.1 平面旋转与隐藏画框
-
-- `ScreenGeometry.right(facing, rotationDegrees)` 与 `up(facing, rotationDegrees)` 在原始平面基向量上做二维旋转，保持右手基和面法线不变。
-- 媒体四边形、九宫格偏移和声音中心共用同一组旋转基向量，避免画面与声音中心错位。
-- `ScreenBlock.hidden` 为默认关闭的 blockstate；开启时 `getRenderShape()` 返回 `INVISIBLE`，BlockEntityRenderer 仍按原流程提交动态媒体。
-- 点击形状不随隐藏状态移除，因此建筑展示场景仍可编辑屏幕。
-- 旋转只改变平面内方向，不引入完整三维欧拉旋转，也不改变 `FACING` 决定的贴附表面。
-- 手动刷新由服务端递增 `loadRevision`，渲染器不直接创建或释放播放器；媒体协调器在后续 tick 中按既有生命周期重建会话。
+- 六向方块模型、媒体面、点击区域位于同一薄面。
+- `UP`/`DOWN` 的宽面 UV、四个窄边贴图方向正确。
+- 九宫格九个位置在水平与上下朝向均正确。
+- `fit/stretch/tile/fill/center` 在 16:9、4:3、竖屏、超宽屏上正确。
+- 平面旋转后画面、偏移和声音中心一致。
+- 无媒体透明、debug 占位、隐藏画框均符合预期。
+- 远距离剔除和超大屏幕不会异常消失或闪烁。
+- OpenGL 与 Vulkan 均完成实机回归。

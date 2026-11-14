@@ -3,6 +3,13 @@
 - 评估日期：2026-11-14
 - 适用范围：WATERFrAMES `1.21.1-fabric` 参考实现、OneScreen 的 Minecraft `26.2` Fabric 目标
 - 结论等级：代码审计，不是显卡实验室认证
+> **2026-11-15 实施更新（优先于下文早期评估）**
+>
+> OneScreen 0.2 已移除固定 `1920x1080` 视频尺寸上限，并实现 OpenGL/Vulkan 的 WATERMeDIA GPU 纹理直通；CPU AWT 路径仍保留为回退。Vulkan 使用 Minecraft graphics queue，并由 `VulkanQueueSynchronization` 与三个 Mixin 串行化 WATERMeDIA 和 Minecraft 的提交、等待与呈现。
+>
+> 沙箱实测：1080p H.264 输出 `1920x1080` 且 `hardwareAccel=true`；4K AV1 Main 10-bit HLG 输出 `3840x2160`，WATERMeDIA 选择软解但 GPU 纹理路径稳定，修复前约 2 秒发生的 `VK_ERROR_DEVICE_LOST` 已不再复现，连续播放超过 1 分钟。
+>
+> 下文仍保留为技术背景与风险清单。其中“保留 1280x720 默认上限”等旧建议已被 0.2 当前实现取代；4K/8K 仍按设备与片源能力动态决定，不构成所有硬件上的性能承诺。
 
 ## 结论
 
@@ -16,14 +23,22 @@ WATERFrAMES 本身没有配置一个“最高只支持 1080p”的固定像素�
 4. 纹理上传、Minecraft 渲染和音频线程仍有足够预算。
 5. 最终显示尺寸和观看距离值得使用该像素数量。
 
-对 OneScreen 当前版本的建议：
+### 0.1.x 时期建议与后续结论
 
-- 保留 `1280x720` 作为安全默认输出上限。
-- 普通场景优先上传 `720p` 或 `1080p` 片源，而不是把 4K/8K 片源交给客户端缩放。
-- WATERMeDIA 的 `hardwareAccel` 保持默认 `true`，利用其硬件优先和软件回退机制。
-- `1080p` 只作为单屏或少量屏幕的测试档位，不应在未压测前设为全局上限。
-- `4K` 需要逐设备验收；只有明确把高分辨率作为核心需求时，才值得开发 OpenGL/Vulkan 原生纹理直通。
-- `8K` 暂不作为首版支持承诺。它可以被部分解码器尝试播放，但 CPU 回读、显存、纹理宽度和带宽风险远高于实际收益。
+2026-11-14 的早期评估曾在 CPU 回读路径占主导时建议：
+
+- 保留 `1280x720` 作为安全输出上限。
+- 优先播放 720p 或 1080p 片源。
+- 将 1080p 作为逐设备测试档位。
+- 只有完成 GPU 纹理直通后才考虑把 4K 作为正式支持目标。
+
+这些建议用于解释 0.1.x 的风险来源，已被 0.2 当前实现取代：
+
+- OneScreen 已取消固定 1280x720/1920x1080 上限。
+- `LOD=MAX` 使用 WATERMeDIA 实际输出尺寸。
+- OpenGL/Vulkan GPU 纹理路径已接入，CPU AWT 路径仅作回退。
+- 4K/8K 的硬解与流畅度仍由片源、WATERMeDIA、FFmpeg、GPU 和驱动决定，不能承诺所有设备都能稳定播放。
+- 性能结论必须区分 `format=GPU/CPU` 与 `hardwareAccel=true/false`。
 
 ## WATERFrAMES 1.21.1 Fabric 的实际行为
 
@@ -215,7 +230,10 @@ FFmpeg 解码
 - 4K60 的单向原始拷贝接近 GiB/s 量级。
 - 低端核显、集成显卡和同时运行光影的客户端更容易卡顿。
 
-## 推荐路线
+## 历史方案（0.2 未采用）
+
+以下路线来自 2026-11-14 的 CPU 纹理评估，仅用于解释设计演进；当前实现以 GPU 纹理直通和动态 LOD 为准。
+
 
 ### A. 首版保持软件纹理桥接
 
@@ -345,7 +363,7 @@ visualResult=...
 - WATERMeDIA 3.0.1 缩放 API：`_watermedia-sources/watermedia-3.0.1/org/watermedia/api/player/MediaPlayer.java`
 - WATERMeDIA 3.0.1 AWT 输出：`_watermedia-sources/watermedia-3.0.1/org/watermedia/api/player/AWTEngine.java`
 - 当前 OneScreen 视频路径：[`src/client/java/dev/onescreen/client/media/MediaSession.java`](../src/client/java/dev/onescreen/client/media/MediaSession.java)
-- 视频实施交接：[docs/VIDEO-HANDLING-AGENT-GUIDE.md](VIDEO-HANDLING-AGENT-GUIDE.md)
+- 人类可读的 GPU/CPU 媒体实现：[docs/MEDIA-AUDIO.md](MEDIA-AUDIO.md)
 
 外部参考资料：
 
@@ -355,4 +373,4 @@ visualResult=...
 
 ## 最终可行性判断
 
-OneScreen 当前架构能够以低开发量得到稳定的 720p 视频，并有资格使用硬件解码；它不适合无条件承诺 4K/8K。若需求只是“在世界里看一块大屏幕”，720p/1080p 配合合理的视频码率通常已经足够。若需求明确包含大量 4K 屏幕或不希望 CPU 回读，必须把 GPU 原生媒体路径列为独立、高风险的后续项目。
+OneScreen 0.2 已接入 OpenGL/Vulkan GPU 纹理，并移除固定 1080p 输出上限。1080p/4K 是否硬解仍由 WATERMeDIA、FFmpeg、编解码器、GPU 和驱动决定；4K/8K 高帧率不应在没有逐设备压力测试时承诺稳定性能。GPU 纹理直通解决的是显示和回读路径，不等于保证每个片源都使用硬件解码。

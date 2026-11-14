@@ -1,192 +1,252 @@
-# 媒体与音频设计
+# 媒体、GPU 纹理与音频
 
-## 依赖
+## 1. 依赖与目标
 
-- WATERMeDIA 3.0.1
-- 与 WATERMeDIA 匹配的 Binaries
-- 客户端必须安装两者
+OneScreen 0.2 使用：
 
-高分辨率、硬件解码、`scale` 和 `LodLevel` 的边界见 [高分辨率与硬件解码评估](HIGH-RESOLUTION-MEDIA.md)。修改视频处理前必须阅读 [视频处理修改交接指南](VIDEO-HANDLING-AGENT-GUIDE.md)。
+- WATERMeDIA `3.0.0` 及后续 `3.0.x` 正式版本
+- 与 WATERMeDIA 发布线匹配的 WATERMeDIA Binaries
+- 客户端必须安装两者；专用服务器不加载媒体原生库
+
+高分辨率、编解码器和硬件能力的评估见 [高分辨率与硬件解码评估](HIGH-RESOLUTION-MEDIA.md)。
 
 不使用：
 
-- WATERMeDIA 2.x 的 `ImageAPI`
-- `ImageCache`
-- `ImageRenderer`
+- WATERMeDIA 2.x 的 `ImageAPI`、`ImageCache`、`ImageRenderer`
 - 旧 VLC `VideoPlayer`
-- Minecraft 私有 `SoundEngine` / `Channel` / `ChannelAccess`
+- Minecraft 私有 `SoundEngine`、`Channel`、`ChannelAccess`
+- 业务代码中的 WATERMeDIA 直接玩家类 import
 
-## 统一媒体入口
+## 2. 统一入口
 
-图片、视频和视频声音统一通过 WATERMeDIA 3 的 `MediaPlayer` 流程。上层只关心：
+所有 WATERMeDIA 版本和 API 差异都集中在：
 
-- 解析 URL。
-- 得到可播放媒体。
-- 获取动态纹理。
-- 控制播放、暂停、音量和循环。
-- 在关闭时释放资源。
+- `src/client/java/dev/onescreen/client/media/WaterMediaCompat.java`
+- `src/client/java/dev/onescreen/client/media/WaterMediaVersion.java`
 
-## M6 实际实现
+业务层只与包装对象交互：
 
-- 图片：`HeadlessGFXEngine` 单帧上传到 Minecraft `DynamicTexture`。
-- 视频：`AWTEngine` 通过软件转换接收 packed BGRA/ARGB，客户端渲染线程仅在帧序号变化时更新 `DynamicTexture`。
-- 音频：`JSEngine` 播放解码后的 PCM，不依赖 OpenGL 后端的当前 OpenAL context。
-- 安全默认输出上限：1280x720；1920x1080 只能作为实机测试档位，未通过压测前不得变成默认值。
-- 渲染层只持有 Minecraft `Identifier` / `DynamicTexture`，不接触 OpenGL 或 Vulkan 原生纹理句柄。
-- 单机暂停菜单会暂停和恢复 `MediaPlayer`；多人游戏不跟随本地菜单暂停。
-- 设置界面通过 `time()` / `duration()` / `canSeek()` 显示播放进度；已知时长媒体使用 `seekQuick()` 拖动预览，并在松开时用 `seek()` 做一次精确定位。
-- 直播流通过 `live()`（旧版兼容 `liveSource()`）识别，并保持不可 seek；HLS 片段进度优先从 WATERMeDIA 对应版本的公开播放列表工具异步读取目标片段时长，并用独立 HTTP 播放列表解析作为旧版/工具不可用时的后备。读取失败时只显示“正在获取”或不可用状态，不影响播放。
-- 可选的“暂停/配置结束后刷新直播”默认关闭。开启后，单机游戏从暂停恢复或屏幕设置更新时会释放并重建同一 URL 的播放器，让直播重新从实时边缘开始；已知时长视频不会被强制重开。
+- `MediaResource`
+- `MediaEngine`
+- `MediaPlayerHandle`
+- `MediaSnapshot`
 
-## 状态机
+这样可以兼容不同 WATERMeDIA 包布局，同时避免在渲染或命令代码中散落反射逻辑。
+
+## 3. 每条屏幕会话的结构
+
+`ScreenMediaManager` 按维度与方块坐标管理 `MediaSession`。每个会话拥有：
+
+- 一个 MRL。
+- 一个视频或图片引擎。
+- 一个播放器。
+- 一个 Minecraft 纹理标识。
+- 当前设置与距离参数。
+- 播放状态、错误和帧序号。
+
+单个客户端最多同时保留 8 个活动会话；超出后延迟重试，避免无限创建解码器。
+
+## 4. 图片路径
+
+图片使用 WATERMeDIA Headless 引擎输出首帧：
 
 ```text
-IDLE
-  -> RESOLVING
-  -> LOADING
-  -> READY
-  -> PLAYING
-  -> PAUSED / ENDED
-任意状态
-  -> ERROR
-  -> CLOSED
+HeadlessGFXEngine
+  -> ByteBuffer / PixelFormat
+  -> NativeImage
+  -> DynamicTexture
+  -> 屏幕四边形
 ```
 
-状态变化应发生在客户端主线程。媒体解码可以发生在 WATERMeDIA 的后台线程中。
+注意：
 
-## MediaSession
+- `format()` 在第一帧到达前可以为 `null`，这是合法状态。
+- 只有 `uploadCount` 或帧序号变化时才复制和上传。
+- 图片尺寸变化时必须重建 `DynamicTexture`。
+- 纹理创建、更新和释放都在客户端线程。
 
-```java
-public final class MediaSession {
-    private final ScreenKey key;
-    private final String url;
+## 5. 视频路径总览
 
-    private volatile MediaState state = MediaState.IDLE;
-    private DynamicTexture texture;
-    private MediaPlayer player;
-    private volatile Throwable lastError;
-    private volatile boolean closed;
+`MediaSession.createVideoPlayer()` 先尝试 GPU 引擎；GPU 初始化或播放器创建失败时回退到 AWT CPU 引擎。
 
-    public void resolveAsync() { ... }
-    public void tick(ScreenSettings settings, double distanceGain, boolean paused) { ... }
-    public MediaSnapshot snapshot() { ... }
-    public void close() { ... }
-}
+```text
+优先：WATERMeDIA GLEngine / VKEngine
+  -> ExternalMediaTexture
+  -> GPU texture view
+
+回退：WATERMeDIA AWTEngine
+  -> BufferedImage packed ARGB
+  -> NativeImage
+  -> DynamicTexture
 ```
 
-## 会话打开伪代码
+`format=GPU` 表示纹理路径，不代表解码器一定使用硬件加速。`hardwareAccel=true/false` 来自播放器运行状态，必须单独记录。
 
-```java
-public void reconcile(ScreenBlockEntity screen) {
-    ScreenKey key = ScreenKey.of(screen);
-    String url = screen.getUrl();
+## 6. OpenGL GPU 纹理
 
-    MediaSession current = sessions.get(key);
-    if (current != null && current.url().equals(url)) {
-        return;
-    }
+OpenGL 路径：
 
-    if (current != null) {
-        current.close();
-        sessions.remove(key);
-    }
+- 使用 WATERMeDIA `GLEngine`。
+- `ExternalMediaTexture.WaterMediaGlTexture` 重写 `glId()`，在绘制时读取当前 GL texture id。
+- `WaterMediaGlView` 同样动态读取 id，避免 WATERMeDIA 轮换纹理后 Minecraft 仍绑定旧句柄。
+- 该包装器不拥有 WATERMeDIA 的纹理对象，只管理 Minecraft 侧的小型 view/facade。
 
-    if (url.isBlank()) {
-        return;
-    }
+## 7. Vulkan GPU 纹理
 
-    if (sessions.size() >= MAX_ACTIVE_SESSIONS) {
-        queueOrReject(key, url);
-        return;
-    }
+### 对象关系
 
-    MediaSession next = MediaSession.openAsync(key, url);
-    sessions.put(key, next);
-}
+```text
+Minecraft VulkanDevice
+  -> WaterMediaVulkanContext
+  -> WATERMeDIA VKContext proxy
+  -> WATERMeDIA VKEngine
+  -> VkImageView
+  -> WaterMediaVulkanView
+  -> Minecraft texture binding
 ```
 
-## 关闭条件
+### 队列契约
 
-所有情况都必须关闭：
+WATERMeDIA `VKEngine` 的纹理发布假定：
 
-- BlockEntity unload。
+1. 媒体写入和 Minecraft 采样使用同一个 graphics queue。
+2. 双方所有需要外部同步的队列操作由同一把 `queueLock()` 串行化。
+3. 图像屏障把结果转换到 `FRAGMENT_SHADER / SHADER_READ` 后，消费者在后续 graphics queue 提交中采样。
+
+当前实现：
+
+- `WaterMediaVulkanContext.queue()` 返回 Minecraft `graphicsQueue()`。
+- `VulkanQueueSynchronization` 按 `VkQueue` 原生地址提供统一锁。
+- `VulkanQueueSubmissionMixin` 锁住 Minecraft `vkQueueSubmit2KHR`。
+- `VulkanQueueMixin` 锁住 `vkQueueWaitIdle`。
+- `VulkanGpuSurfaceMixin` 锁住 `vkQueuePresentKHR`。
+
+### 历史故障
+
+旧实现把 WATERMeDIA 指向独立 compute/transfer queue，却没有跨队列 semaphore，播放 4K 约 2 秒后出现：
+
+```text
+Retention wait failed (VkResult -4)
+VK_ERROR_DEVICE_LOST
+```
+
+该问题不是 HTTPS、片源或纹理尺寸导致的，而是 Vulkan 队列与可见性契约错误。不要恢复独立队列方案。
+
+### 所有权
+
+- WATERMeDIA 拥有 `VkImage`、`VkDeviceMemory`、`VkImageView` 和退休队列。
+- OneScreen 只包装当前 view 句柄，不在 `ExternalMediaTexture.close()` 中销毁 WATERMeDIA 的 view。
+- WATERMeDIA 的资源退休回调通过 Minecraft render-thread fenced task 延迟执行。
+
+## 8. 分辨率与距离 LOD
+
+0.2 不再设置固定的 `1920x1080` 视频上限：
+
+- 近距离 `LOD=MAX` 时允许源尺寸，例如 3840x2160。
+- 远距离由 `VideoLod` 选择 `MAX/CLOSE/NEAR/FAR/FAR_AWAY`。
+- 档位阈值使用归一化距离比例，并带 `0.05` 迟滞，避免边界抖动。
+- 只有档位实际变化时才调用 WATERMeDIA 的 `lod(...)`。
+- 最终使用硬解还是软解由 WATERMeDIA、FFmpeg、GPU、驱动和片源决定。
+
+测试片 `4k.mp4` 为 AV1 Main 10-bit HLG。在当前 RTX 5070 Ti / FFmpeg / WATERMeDIA 组合中，日志显示 `hardwareAccel=false`，但 `format=GPU`，说明它仍通过 GPU 纹理路径上传和显示。
+
+## 9. CPU 纹理回退
+
+AWT 路径使用 packed ARGB/BGRA `BufferedImage`。`MediaTextureUploader` 使用 native-order `IntBuffer` 批量写入 `NativeImage`，避免逐像素 `setPixel`。
+
+约束：
+
+- 水印回调线程只递增帧序号。
+- 渲染线程只处理最新帧。
+- 每帧最多调用一次 `DynamicTexture.upload()`。
+- 不允许从渲染线程创建播放器或发起网络请求。
+- CPU 路径仍涉及 GPU->CPU 回读、Java 像素复制和 CPU->GPU 上传，因此不应对所有 4K/8K 设备承诺性能。
+
+## 10. 播放状态与控制
+
+主要状态：
+
+```text
+RESOLVING -> LOADING -> PLAYING
+                    \-> PAUSED -> PLAYING
+                    \-> ENDED
+任意状态 -> ERROR / IDLE
+```
+
+编辑器控制：
+
+- 播放：在停止或结束后重新创建/恢复播放。
+- 暂停：手动暂停覆盖状态在关闭编辑器后仍保持。
+- 停止：释放媒体纹理并清除屏幕画面；播放器不再继续显示帧。
+- 刷新：服务端递增 `loadRevision`，客户端关闭旧会话并重建同一 URL。
+- 循环：通过播放器 `repeat` 设置即时更新。
+- 进度条：VOD 可拖动；直播只读。
+- 自动直播刷新：默认关闭，只对直播流生效。
+
+## 11. VOD 进度与直播追帧
+
+VOD：
+
+- 使用 `time()` / `duration()`。
+- 拖动时调用 `seekQuick()` 预览，松开时用 `seek()` 精确落点。
+- 已知时长媒体不会因为直播刷新设置而重开。
+
+直播：
+
+- 通过 `live()`（兼容旧层 `liveSource()`）识别。
+- 进度条不可拖动，只显示 HLS 当前片段的近似进度。
+- HLS 片段时长优先从 WATERMeDIA 公开播放列表工具读取。
+- 若工具不可用，使用 `HlsPlaylistResolver` 直接解析播放列表。
+- 自动追帧在暂停恢复或配置更新后重连，带 1 秒防抖，避免连续配置导致重连风暴。
+
+## 12. 音频与距离
+
+音频通过 WATERMeDIA 的 JS 引擎播放，不依赖当前 OpenGL/Vulkan context。
+
+输出音量：
+
+```text
+finalVolume = clamp(screenVolume * distanceGain, 0, 1)
+distanceGain = 1 at <= minDistance
+distanceGain = 0 at >= maxDistance
+```
+
+- 每个客户端独立计算距离音量。
+- 一个玩家静音不影响其他玩家。
+- 视频超出声音距离时仍可继续显示，声音归零。
+- 服务端配置可提高渲染和声音上限，但实际仍受客户端区块加载和视距限制。
+
+## 13. 生命周期
+
+以下事件必须关闭会话：
+
+- BlockEntity 卸载。
 - 玩家离开服务器。
 - 客户端关闭。
-- 维度改变。
+- 维度切换。
 - URL 改变。
-- 方块被移除。
-- 媒体句柄和播放器销毁失败。
-- 达到并发上限后被淘汰。
+- 方块移除。
+- GPU 引擎初始化失败后切换到 CPU 引擎。
+- 编辑器中停止播放。
+- 手动刷新替换旧会话。
 
-## 播放进度与直播追帧
+关闭顺序：
 
-- 进度查询全部走 `WaterMediaCompat`，业务层不直接链接任一 WATERMeDIA 玩家包布局。
-- 已知时长：进度条范围为 `0..duration()`，拖动时调用 `seekQuick(target)`，松开时调用 `seek(target)`。
-- 直播：播放器报告 `live=true` 且 `canSeek=false`，进度条只读。若播放列表可解析出片段时长，显示 `floorMod(time, segmentDuration) / segmentDuration`；这是片段级近似显示，不声称能定位到 HLS 序号。
-- 自动追帧只对直播流生效，并带 1 秒重连防抖。配置更新发生在暂停期间时会延迟到恢复后执行；VOD 和图片不会触发追帧。
-- HLS 播放列表探测在守护线程执行，不阻塞客户端 tick、GUI 渲染或首帧上传。
+1. 从纹理管理器注销 Minecraft 纹理。
+2. 释放播放器。
+3. 释放 CPU/GPU 引擎。
+4. 让 WATERMeDIA 延迟回收 GPU view。
+5. 从活动会话表移除。
 
-## 音量
+## 14. 常见排错
 
-第一版使用客户端距离衰减：
+| 日志/现象 | 优先检查 |
+|---|---|
+| `format=GPU` 但 `hardwareAccel=false` | 片源/编解码器/FFmpeg 是否选择软解，不代表纹理路径失败 |
+| `VK_ERROR_DEVICE_LOST` | graphics queue、队列锁、三个 Vulkan Mixin 是否正确注入 |
+| 停止后黑屏或重启失败 | 媒体纹理是否注销、播放器和引擎是否按顺序释放 |
+| 只有第一帧或画面不更新 | 帧序号、引擎 `texture()` 句柄是否变化、纹理 view 是否动态读取 |
+| HLS 进度不可用 | 播放列表解析失败时安全降级，不应影响播放器本身 |
+| GPU 路径创建失败 | 应自动回退 AWT；检查 `MediaSession.createVideoPlayer()` 日志 |
 
-```java
-float distanceGain(double distance, double minDistance, double maxDistance) {
-    if (distance <= minDistance) {
-        return 1.0f;
-    }
-    if (distance >= maxDistance) {
-        return 0.0f;
-    }
-    double t = (distance - minDistance) / (maxDistance - minDistance);
-    return (float) (1.0 - t);
-}
-
-float outputGain(boolean muted, float masterVolume, float distanceGain) {
-    return muted ? 0.0f : clamp(masterVolume * distanceGain, 0.0f, 1.0f);
-}
-```
-
-默认值建议：
-
-- 最小距离 `2` 格。
-- 最大距离 `48` 格。
-- 超出最大距离暂停声音，但视频可继续显示。
-
-## 多客户端
-
-- 每个客户端独立创建媒体会话。
-- 服务器只同步 URL 和音量配置。
-- 玩家距离不同，听到的音量不同。
-- 一个玩家静音不影响其他玩家。
-
-## 资源限制
-
-```text
-默认最大活动会话：4–8
-超限策略：暂停新屏幕声音并要求手动 reload，或排队加载
-并发解码：由 WATERMeDIA 控制，不在渲染线程另建线程池
-自动重试：最多一次
-```
-
-## 失败处理
-
-- 不支持的格式显示错误占位图。
-- 网络不可达不阻塞客户端。
-- 同一错误不逐帧写日志。
-- 连续失败不无限重试。
-- 清理失败仍需从活动 map 中移除，防止继续渲染和发声。
-
-## 验证
-
-- 静态 PNG/JPEG。
-- MP4（已验证）。
-- HLS/M3U8：WATERMeDIA 3.0.1 支持主播放列表、媒体播放列表、直播/VOD 探测和 FFmpeg HLS 解复用，仍待 OneScreen 实机回归。
-- 多频道 IPTV：当前 OneScreen 只播放第一个源。
-- 有视频无音频。
-- 有音频无视频。
-- 超长 URL。
-- 重定向 URL。
-- 无效 URL。
-- 加载过程中修改 URL。
-- 加载过程中卸载区块。
+更多测试步骤见 [测试计划](TESTING.md)。

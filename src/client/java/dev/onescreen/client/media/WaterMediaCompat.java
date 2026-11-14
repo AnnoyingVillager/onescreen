@@ -1,11 +1,14 @@
 package dev.onescreen.client.media;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vulkan.VulkanDevice;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
@@ -28,7 +31,14 @@ public final class WaterMediaCompat {
 
 	public static String apiDescription() {
 		Reflective implementation = implementation();
-		return implementation.description();
+		String version = WaterMediaVersion.installed();
+		if (version == null) {
+			return implementation.description();
+		}
+		String channel = WaterMediaVersion.isTestBuild(version)
+			? "test build, ranked below 3.0.0"
+			: "formal 3.0.x line";
+		return implementation.description() + " version " + version + " (" + channel + ")";
 	}
 
 	static MediaResource mrl(final String url) {
@@ -47,6 +57,47 @@ public final class WaterMediaCompat {
 	static MediaEngine awtEngine(final Runnable frameCallback) {
 		Reflective implementation = implementation();
 		return new MediaEngine(invoke(implementation.awtFactory(), null, frameCallback));
+	}
+
+	static MediaEngine glEngine(final Thread renderThread, final Executor renderExecutor) {
+		Reflective implementation = implementation();
+		return new MediaEngine(invoke(implementation.glEngineFactory(), null, renderThread, renderExecutor));
+	}
+
+	static MediaEngine vkEngine(final Object context) {
+		Reflective implementation = implementation();
+		return new MediaEngine(invoke(implementation.vkEngineFactory(), null, context));
+	}
+
+	static @Nullable MediaEngine gpuEngine(final Thread renderThread, final Executor renderExecutor) {
+		Reflective implementation = implementation();
+		String backend = RenderSystem.getDevice().getDeviceInfo().backendName();
+		if (isOpenGl(backend)) {
+			return new MediaEngine(invoke(implementation.glEngineFactory(), null, renderThread, renderExecutor));
+		}
+		if (isVulkan(backend)) {
+			VulkanDevice device = WaterMediaVulkanContext.currentDevice();
+			if (device == null) {
+				return null;
+			}
+			WaterMediaVulkanContext.Bridge context = WaterMediaVulkanContext.create(device, implementation.vkContextClass());
+			try {
+				return new MediaEngine(invoke(implementation.vkEngineFactory(), null, context.proxy()), context);
+			} catch (RuntimeException | Error exception) {
+				context.close();
+				throw exception;
+			}
+		}
+		return null;
+	}
+
+	private static boolean isOpenGl(final String backend) {
+		String normalized = backend.toLowerCase(java.util.Locale.ROOT);
+		return normalized.contains("opengl") || normalized.equals("gl");
+	}
+
+	private static boolean isVulkan(final String backend) {
+		return backend.toLowerCase(java.util.Locale.ROOT).contains("vulkan");
 	}
 
 	static MediaPlayerHandle createPlayer(final MediaResource resource, final Supplier<Object> graphicsSupplier) {
@@ -210,18 +261,28 @@ public final class WaterMediaCompat {
 
 	static final class MediaEngine {
 		private final Object handle;
+		private final @Nullable AutoCloseable companion;
+		private final Method releaseMethod;
 		private final Method widthMethod;
 		private final Method heightMethod;
+		private final Method textureMethod;
 		private final @Nullable Method formatMethod;
 		private final @Nullable Method uploadCountMethod;
 		private final @Nullable Method lastUploadMethod;
 		private final @Nullable Method imageMethod;
 
 		private MediaEngine(final Object handle) {
+			this(handle, null);
+		}
+
+		private MediaEngine(final Object handle, final @Nullable AutoCloseable companion) {
 			this.handle = handle;
+			this.companion = companion;
 			Class<?> type = handle.getClass();
+			this.releaseMethod = method(type, "release");
 			this.widthMethod = method(type, "width");
 			this.heightMethod = method(type, "height");
+			this.textureMethod = method(type, "texture");
 			this.formatMethod = optionalMethod(type, "format");
 			this.uploadCountMethod = optionalMethod(type, "uploadCount");
 			this.lastUploadMethod = optionalMethod(type, "lastUpload");
@@ -238,6 +299,21 @@ public final class WaterMediaCompat {
 
 		int height() {
 			return ((Number) invoke(this.heightMethod, this.handle)).intValue();
+		}
+
+		long texture() {
+			return ((Number) invoke(this.textureMethod, this.handle)).longValue();
+		}
+
+		void release() {
+			invoke(this.releaseMethod, this.handle);
+			if (this.companion != null) {
+				try {
+					this.companion.close();
+				} catch (Exception exception) {
+					throw new IllegalStateException("Failed to close WATERMeDIA engine bridge", exception);
+				}
+			}
 		}
 
 		@Nullable PixelFormat format() {
@@ -270,8 +346,6 @@ public final class WaterMediaCompat {
 
 	static final class MediaPlayerHandle {
 		private final Object handle;
-		private final @Nullable Method maxSizeMethod;
-		private final @Nullable Method scaleMethod;
 		private final Method statusMethod;
 		private final Method volumeMethod;
 		private final Method muteMethod;
@@ -286,14 +360,14 @@ public final class WaterMediaCompat {
 		private final Method canSeekMethod;
 		private final Method seekMethod;
 		private final Method seekQuickMethod;
+		private final @Nullable Method lodMethod;
 		private final @Nullable Method liveMethod;
 		private final @Nullable Method liveSourceMethod;
+		private final @Nullable Method hardwareAccelerationMethod;
 
 		private MediaPlayerHandle(final Object handle) {
 			this.handle = handle;
 			Class<?> type = handle.getClass();
-			this.maxSizeMethod = optionalMethod(type, "maxSize", int.class, int.class);
-			this.scaleMethod = optionalMethod(type, "scale", int.class, int.class);
 			this.statusMethod = method(type, "status");
 			this.volumeMethod = method(type, "volume", int.class);
 			this.muteMethod = method(type, "mute", boolean.class);
@@ -308,16 +382,14 @@ public final class WaterMediaCompat {
 			this.canSeekMethod = method(type, "canSeek");
 			this.seekMethod = method(type, "seek", long.class);
 			this.seekQuickMethod = method(type, "seekQuick", long.class);
+			this.lodMethod = optionalMethod(type, "lod", lodLevelClass(type));
 			this.liveMethod = optionalMethod(type, "live");
 			this.liveSourceMethod = optionalMethod(type, "liveSource");
-		}
-
-		void maxSize(final int width, final int height) {
-			Method target = this.maxSizeMethod != null ? this.maxSizeMethod : this.scaleMethod;
-			if (target == null) {
-				throw new IllegalStateException("WATERMeDIA player has neither maxSize nor scale");
+			Method hardwareAcceleration = optionalMethod(type, "hwAccel");
+			if (hardwareAcceleration == null) {
+				hardwareAcceleration = optionalMethod(type, "isHwAccel");
 			}
-			invoke(target, this.handle, width, height);
+			this.hardwareAccelerationMethod = hardwareAcceleration;
 		}
 
 		String status() {
@@ -385,6 +457,21 @@ public final class WaterMediaCompat {
 		boolean seekQuick(final long timeMs) {
 			return (Boolean) invoke(this.seekQuickMethod, this.handle, timeMs);
 		}
+
+		void lod(final String level) {
+			Method target = this.lodMethod;
+			if (target == null) {
+				return;
+			}
+			@SuppressWarnings({"rawtypes", "unchecked"})
+			Object value = Enum.valueOf((Class<? extends Enum>)target.getParameterTypes()[0], level);
+			invoke(target, this.handle, value);
+		}
+
+		boolean hardwareAcceleration() {
+			return this.hardwareAccelerationMethod != null
+				&& (Boolean) invoke(this.hardwareAccelerationMethod, this.handle);
+		}
 	}
 
 	private record Detection(@Nullable Reflective implementation, @Nullable Throwable error) {
@@ -392,6 +479,13 @@ public final class WaterMediaCompat {
 
 	private static Detection detect() {
 		try {
+			String waterMediaVersion = WaterMediaVersion.installed();
+			if (waterMediaVersion != null && !WaterMediaVersion.isSupported(waterMediaVersion)) {
+				return new Detection(
+					null,
+					new IllegalStateException("Unsupported WATERMeDIA version: " + waterMediaVersion)
+				);
+			}
 			if (classExists("org.watermedia.api.player.PlayerAPI")) {
 				return new Detection(new Reflective(false), null);
 			}
@@ -439,6 +533,24 @@ public final class WaterMediaCompat {
 		} catch (NoSuchMethodException ignored) {
 			return null;
 		}
+	}
+
+	private static Class<?> lodLevelClass(final Class<?> playerType) {
+		for (Class<?> nested : playerType.getClasses()) {
+			if ("LodLevel".equals(nested.getSimpleName())) {
+				return nested;
+			}
+		}
+		for (String name : List.of(
+			"org.watermedia.api.player.MediaPlayer$LodLevel",
+			"org.watermedia.api.media.players.MediaPlayer$LodLevel"
+		)) {
+			try {
+				return Class.forName(name, false, WaterMediaCompat.class.getClassLoader());
+			} catch (ClassNotFoundException ignored) {
+			}
+		}
+		return Void.class;
 	}
 
 	private static boolean booleanMethod(final Object target, final String name) {
@@ -494,6 +606,9 @@ public final class WaterMediaCompat {
 		private final Method mrlFactory;
 		private final Method headlessFactory;
 		private final Method awtFactory;
+		private final Method glEngineFactory;
+		private final Method vkEngineFactory;
+		private final Class<?> vkContextClass;
 		private final Method jsEngineFactory;
 		private final Method playerFactory;
 
@@ -510,6 +625,13 @@ public final class WaterMediaCompat {
 			this.description = legacy ? "WATERMeDIA 3.0.0.x MediaAPI" : "WATERMeDIA 3.0.1+ PlayerAPI";
 			this.mrlFactory = apiClass.getMethod("mrl", String.class);
 			this.awtFactory = apiClass.getMethod("awtEngine", Runnable.class);
+			this.glEngineFactory = apiClass.getMethod("glEngine", Thread.class, Executor.class);
+			this.vkContextClass = Class.forName(
+				legacy ? "org.watermedia.api.media.engines.vk.VKContext" : "org.watermedia.api.player.VKContext",
+				false,
+				WaterMediaCompat.class.getClassLoader()
+			);
+			this.vkEngineFactory = apiClass.getMethod("vkEngine", this.vkContextClass);
 			this.headlessFactory = legacy
 				? apiClass.getMethod("headlessEngine", boolean.class)
 				: apiClass.getMethod("headlessEngine");
@@ -537,6 +659,18 @@ public final class WaterMediaCompat {
 
 		Method awtFactory() {
 			return this.awtFactory;
+		}
+
+		Method glEngineFactory() {
+			return this.glEngineFactory;
+		}
+
+		Method vkEngineFactory() {
+			return this.vkEngineFactory;
+		}
+
+		Class<?> vkContextClass() {
+			return this.vkContextClass;
 		}
 
 		Method jsEngineFactory() {

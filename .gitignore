@@ -42,3 +42,8 @@ replay_*.log
 # local test output
 logs/
 *.log
+
+# local agent/tooling output
+.codex-*
+/config/
+/crash-reports/

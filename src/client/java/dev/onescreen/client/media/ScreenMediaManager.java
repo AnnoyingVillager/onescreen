@@ -83,7 +83,12 @@ public final class ScreenMediaManager {
 				this.remove(entry.getKey());
 				continue;
 			}
-			entry.getValue().tick(screen.getSettings(), audioDistanceGain(screen), paused);
+			entry.getValue().tick(
+				screen.getSettings(),
+				audioDistanceGain(screen),
+				videoDistanceRatio(screen),
+				paused
+			);
 		}
 	}
 
@@ -190,8 +195,12 @@ public final class ScreenMediaManager {
 			return;
 		}
 
-		double distanceGain = audioDistanceGain(screen);
-		this.sessions.put(key, new MediaSession(key, settings.url(), revision, settings, distanceGain));
+		double audioDistanceGain = audioDistanceGain(screen);
+		double videoDistanceRatio = videoDistanceRatio(screen);
+		this.sessions.put(
+			key,
+			new MediaSession(key, settings.url(), revision, settings, audioDistanceGain, videoDistanceRatio)
+		);
 		this.deferred.remove(key);
 	}
 
@@ -227,6 +236,23 @@ public final class ScreenMediaManager {
 			return 0.0D;
 		}
 		return 1.0D - (distance - minDistance) / (maxDistance - minDistance);
+	}
+
+	private static double videoDistanceRatio(final ScreenBlockEntity screen) {
+		var player = Minecraft.getInstance().player;
+		if (player == null || !(screen.getLevel() instanceof ClientLevel level) || player.level() != level) {
+			return 1.0D;
+		}
+		Vec3 center = ScreenGeometry.mediaCenter(
+			screen.getBlockPos(),
+			screen.getBlockState().getValue(ScreenBlock.FACING),
+			screen.getSettings()
+		);
+		double renderDistance = screen.getSettings().renderDistance();
+		if (renderDistance <= 0.0D) {
+			return 1.0D;
+		}
+		return Math.max(0.0D, Math.min(1.0D, player.position().distanceTo(center) / renderDistance));
 	}
 
 	private static ScreenKey key(final ClientLevel level, final ScreenBlockEntity screen) {

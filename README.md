@@ -7,7 +7,7 @@ OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模�
 > [!IMPORTANT]
 > **本项目是一个由生成式 AI 主导完成的项目。** 它不是 Mojang、Fabric、WATERMeDIA 或其作者的官方项目，也不是由成熟商业团队维护的产品。代码、文档、构建配置和排错记录主要由生成式 AI 生成与整理，人类用户提供需求、运行环境和实机反馈。使用前请备份世界；建议先在测试世界中验证。
 
-> 当前状态：`0.1.2` 公开测试版本。核心屏幕、编辑界面、图片/视频/声音、播放进度与直播追帧、六向朝向、命令、网络同步、专属创意栏及 OpenGL/Vulkan 渲染路径已实现；后续版本将继续补充直播流、压力和多人测试。
+> 当前状态：最新公开版本为 `0.2.0`，加入 FHD/4K 源尺寸支持、WATERMeDIA GPU 纹理直通和 Vulkan 共享队列同步。
 
 > 下载：[GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · 源码与问题反馈：[GitHub 仓库](https://github.com/AnnoyingVillager/onescreen)
 
@@ -23,31 +23,35 @@ OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模�
 - 服务端权威保存屏幕设置，并向客户端同步。
 - 离开区块、切换维度或断开连接时关闭媒体会话。
 - 独立 `OneScreen` 创意栏，不混入原版建筑方块分类。
-- 渲染路径不绑定单一 OpenGL API，已覆盖 Minecraft 26.2 的 OpenGL 与 Vulkan 后端。
+- 渲染路径不绑定单一 OpenGL API，已覆盖 Minecraft 26.2 的 OpenGL 与 Vulkan 后端。`0.2.0` 进一步支持 WATERMeDIA 的 GPU 纹理直通，并保留 AWT CPU 纹理回退。
 
 ## 兼容版本
 
-| 组件 | 编译/测试基线 | 运行兼容范围 |
+| 组件 | 构建/测试基线 | 运行兼容范围 |
 |---|---|---|
 | Minecraft | 26.2 | 26.2 |
 | Java | 25 | 25 |
 | Fabric Loader | 0.18.6 | 最低 0.18.0；较新的 0.18.x/0.19+/0.20+ 可按 Fabric 兼容规则运行 |
 | Fabric API | 0.152.0+26.2 | 最低 0.152.0+26.2 |
-| WATERMeDIA | 3.0.0.23 | 3.0.0.23 与 3.0.1 |
-| WATERMeDIA Binaries | 3.0.0.6 | 早期客户端配套 3.0.0.23；新版客户端使用 3.0.1 |
+| WATERMeDIA | 3.0.0 | 3.0.x；`3.0.0.x` 测试版本低于正式 `3.0.0`，仅作 best-effort 兼容 |
+| WATERMeDIA Binaries | 3.0.0 | 应与 WATERMeDIA 主版本、实际发布包配套 |
 
-WATERMeDIA 3.0.0.23 与 3.0.1 使用不同的公开 Java 包布局。OneScreen 通过客户端兼容层自动识别两套 API，因此同一个 OneScreen JAR 无需针对 WATERMeDIA 小版本重复替换。
+WATERMeDIA 的版本排序并不等同于普通四段版本号：
 
-> **版本支持说明：** 对 WATERMeDIA `3.0.0.23` 仅提供初版兼容，目的是让早期 26.2 客户端能够启动和播放媒体。后续版本可能根据 API 维护成本移除对该旧版本的兼容性；新安装建议优先使用 `3.0.1`。
+```text
+3.0.0.23 < 3.0.0 < 3.0.1 < 3.0.2
+```
+
+`3.0.0` 是当前正式基线，`3.0.0.x` 视为测试版本，`3.0.x`（x > 0）视为高于基准的新正式版本。OneScreen 的加载器声明为 WATERMeDIA `>=3.0.0.0 <3.1.0`，运行时还会由兼容层做二次判断。
 
 ### 推荐组合
 
 | 使用场景 | WATERMeDIA | WATERMeDIA Binaries |
 |---|---|---|
-| 早期 26.2 客户端 | 3.0.0.23 | [3.0.0.6](https://www.curseforge.com/minecraft/mc-mods/watermedia-binaries/files/8519058) |
-| 当前 26.2 客户端 | 3.0.1 | 3.0.1 |
+| 当前稳定组合 | `3.0.0` | `3.0.0` |
+| 后续正式 3.0.x | 对应的 `3.0.x` | WATERMeDIA 官方要求的配套版本 |
 
-请严格按照上表配套使用。经核对，WATERMeDIA `3.0.0.23` 对应 WATERMeDIA Binaries `3.0.0.6`；混用不配套的版本可能导致媒体引擎无法初始化。
+请以 WATERMeDIA 发布页标注的配套 Binaries 为准，不要混用不同发布线。`3.0.0.x` 测试版本可能被加载，但不再作为新功能和正式测试的主要目标。
 
 ## 必需前置
 
@@ -96,19 +100,19 @@ WATERMeDIA 3.0.0.23 与 3.0.1 使用不同的公开 Java 包布局。OneScreen �
 常用命令：
 
 ```text
-/screen set <url>
-/screen size <width> <height>
-/screen renderdistance <blocks>
-/screen audiodistance <blocks>
-/screen align <top_left|up|top_right|left|center|right|bottom_left|down|bottom_right>
-/screen fitmode <fit|stretch|tile|fill|center>
-/screen rotation <pos> <-180..180>
-/screen hideframe <pos> <true|false>
-/screen volume <0.0-1.0>
-/screen mute <true|false>
-/screen loop <true|false>
-/screen reload
-/screen info
+/screen set <x> <y> <z> <url>
+/screen size <x> <y> <z> <width> <height>
+/screen renderdistance <x> <y> <z> <blocks>
+/screen audiodistance <x> <y> <z> <blocks>
+/screen align <x> <y> <z> <top_left|up|top_right|left|center|right|bottom_left|down|bottom_right>
+/screen fitmode <x> <y> <z> <fit|stretch|tile|fill|center>
+/screen rotation <x> <y> <z> <-180..180>
+/screen hideframe <x> <y> <z> <true|false>
+/screen volume <x> <y> <z> <0.0-1.0>
+/screen mute <x> <y> <z> <true|false>
+/screen loop <x> <y> <z> <true|false>
+/screen reload <x> <y> <z>
+/screen info <x> <y> <z>
 /screen config debug <on|off>
 ```
 
@@ -138,29 +142,32 @@ Windows 使用：
 - `fit`、`fill` 和 `stretch` 都以整个屏幕为边界；`tile` 与 `center` 使用媒体长边 1 格作为基准尺寸。
 - HLS 直播流不能在进度条上拖动；进度条只显示当前片段的目标时长进度，片段边界基于播放列表 `EXT-X-TARGETDURATION`/片段时长估算。开启直播追帧后，暂停恢复或配置更新会重新打开播放器，可能产生短暂黑屏、缓冲或音频中断。
 - 直播追帧默认关闭，以避免每次打开配置或暂停恢复都增加一次重连；该选项只作用于直播流，不会把已知时长的视频跳回开头。
-- 首版仍以 CPU 帧复制到 Minecraft 动态纹理为主要视频路径，4K/8K 高帧率播放不是默认性能承诺。
+- `0.2.0` 优先接入 WATERMeDIA 的 OpenGL/Vulkan GPU 纹理，失败时回退到 CPU 帧复制。4K/8K 是否硬解及能否流畅播放取决于片源、编解码器、GPU、驱动和 WATERMeDIA；OneScreen 不再设置固定 1080p 上限，但也不对高帧率 4K/8K 作无条件的性能承诺。
 - 生成式 AI 主导的项目可能存在未被现有测试覆盖的边界问题；遇到问题时请保留 `latest.log`、WATERMeDIA 日志和复现步骤。
 
 ## 文档
 
+### 人类使用与开发文档
+
 - [范围与验收标准](docs/SCOPE.md)
-- [项目计划](docs/PROJECT_PLAN.md)
 - [系统架构](docs/ARCHITECTURE.md)
 - [版本与 API 约束](docs/API-VERSIONS.md)
-- [渲染设计](docs/RENDERING.md)
-- [媒体与音频](docs/MEDIA-AUDIO.md)
-- [视频处理交接指南](docs/VIDEO-HANDLING-AGENT-GUIDE.md)
+- [渲染实现](docs/RENDERING.md)
+- [媒体、GPU 纹理与音频](docs/MEDIA-AUDIO.md)
+- [高分辨率与硬件解码说明](docs/HIGH-RESOLUTION-MEDIA.md)
 - [网络同步与命令](docs/NETWORK-SYNC.md)
 - [配置文件](docs/CONFIGURATION.md)
 - [命令参考](docs/COMMAND-REFERENCE.md)
 - [测试计划](docs/TESTING.md)
-- [里程碑](docs/MILESTONES.md)
 - [架构决策记录](docs/DECISIONS.md)
 - [风险清单](docs/RISKS.md)
-- [AI 协作规范](docs/AI-WORKFLOW.md)
 - [开发环境与验证](docs/DEVELOPMENT.md)
 - [发布流程](docs/PUBLISHING.md)
 - [更新日志](CHANGELOG.md)
+
+### 维护与交接
+
+- [Agent 交接入口](agents/README.md)
 
 ## 许可证
 

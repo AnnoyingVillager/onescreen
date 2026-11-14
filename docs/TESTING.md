@@ -114,7 +114,7 @@ gradlew runGameTestServer
 - [x] 隐藏画框后仍可通过原点击区域右键打开编辑器。
 - [x] 旋转与隐藏状态在退出并重进世界后恢复。
 - [x] `/screen rotation`、`/screen hideframe` 与 `/screen info` 实机可用。
-- [x] WATERMeDIA 3.0.1：OpenGL 3.3 与 Vulkan 1.4.329 均完成上述回归。
+- [x] 历史兼容记录：WATERMeDIA 3.0.1 曾在 OpenGL 3.3 与 Vulkan 1.4.329 完成上述回归。
 - [x] 编辑面板在 856×512 下完整显示新增字段、复选框和四个播放控制按钮。
 
 ### 画面适应模式
@@ -139,15 +139,18 @@ gradlew runGameTestServer
 
 ### 高分辨率与硬件解码
 
-- [ ] 默认仍为 1280x720。
-- [ ] 1920x1080 仅作为测试档位逐设备验收。
-- [ ] 720p60、1080p30、1080p60 分别记录 CPU、帧时延和内存。
+- [x] OneScreen 不设固定视频分辨率上限；近距离 `LOD=MAX` 使用 WATERMeDIA 的实际输出尺寸。
+- [x] Vulkan 1080p H.264：输出 `1920x1080`、`format=GPU`、`hardwareAccel=true`。
+- [x] Vulkan 4K AV1 Main 10-bit HLG：输出 `3840x2160`、`format=GPU`；当前 WATERMeDIA 选择软解，但 GPU 纹理上传正常。
+- [ ] OpenGL 下完成 1080p 与 4K 回归。
+- [ ] 720p60、1080p30、1080p60 分别记录 CPU、帧时延、显存和内存。
 - [ ] H.264 必测；HEVC、AV1 按设备能力记录成功或失败。
-- [ ] `hardwareAccel=true` 时记录 WATERMeDIA 硬解初始化或软件回退日志。
-- [ ] `hardwareAccel=false` 时视频仍能播放。
-- [ ] 距离跨越 LOD 阈值时只切换一次，不在边界反复重建纹理。
-- [ ] 竖屏、超宽屏和正方形视频保持宽高比。
-- [ ] 4K/8K 只作为实验数据记录，不进入默认支持承诺。
+- [ ] 分别记录两条独立指标：`format=GPU/CPU`（纹理路径）与 `hardwareAccel=true/false`（解码路径）。
+- [ ] `hardwareAccel=true` 时记录 WATERMeDIA 硬解初始化或软件回退日志；`hardwareAccel=false` 时也必须能正常播放。
+- [ ] 距离跨越 LOD 阈值时只切换一次，不在迟滞边界反复重建纹理。
+- [ ] 竖屏、超宽屏、正方形和不同宽高比媒体验证五种画面适配模式。
+- [ ] Vulkan 4K 连续播放 30 分钟压力测试。
+- [ ] 8K 仅按设备与片源记录实验结果；OneScreen 不拦截，但不对所有硬件作流畅播放承诺。
 
 ### URL 同步与命令
 
@@ -171,25 +174,32 @@ gradlew runGameTestServer
 - [ ] 快速连续修改 URL 无重复声音。
 - [ ] 方块被破坏后不残留会话。
 
-## WATERMeDIA 双版本兼容
+## WATERMeDIA 版本兼容矩阵
 
-- [x] `WATERMeDIA 3.0.0.23`：`compileJava`、`compileClientJava` 和 `build` 通过。
-- [x] `WATERMeDIA 3.0.0.23`：运行时识别为 `WATERMeDIA 3.0.0.x MediaAPI`。
-- [x] `WATERMeDIA 3.0.1`：运行时识别为 `WATERMeDIA 3.0.1+ PlayerAPI`。
-- [x] `WATERMeDIA Binaries 3.0.0.6`：与 WATERMeDIA 3.0.0.23 的配套关系及官方文件大小已核对。
-- [x] `WATERMeDIA 3.0.0.23 + Binaries 3.0.0.6`：Vulkan 1.4.329 下视频、硬件解码路径、停止、手动刷新与重新播放进入 `PLAYING`。
-- [x] `WATERMeDIA 3.0.1 + Binaries 3.0.1`：OpenGL 3.3 与 Vulkan 1.4.329 下完成媒体与 0.1.1 功能回归。
-- [ ] 3.0.0.23 + Binaries 3.0.0.6：OpenGL 3.3 播放回归。
+当前正式基线为 `WATERMeDIA 3.0.0 + Binaries 3.0.0`：
 
-`3.0.0.23` 仅提供初版兼容，未来可能移除；新增功能默认只保证 `3.0.1`。
+- [x] `3.0.0`：`compileJava`、`compileClientJava` 和 `build` 通过。
+- [x] `WaterMediaVersion` 正确处理特殊排序：`3.0.0.23 < 3.0.0 < 3.0.1 < 3.0.2`。
+- [x] WATERMeDIA 玩家 API、MRL、引擎和播放器差异集中在 `WaterMediaCompat`。
+- [x] `3.0.0 + Binaries 3.0.0`：Vulkan 1080p 硬解与 4K GPU 纹理路径通过。
+- [ ] `3.0.0 + Binaries 3.0.0`：OpenGL 1080p/4K 播放回归。
+- [ ] 后续 `3.0.x` 正式版发布后，按相同矩阵重新验收。
+
+历史记录（不代表当前基线）：
+
+- [x] `WATERMeDIA 3.0.0.23 + Binaries 3.0.0.6`：完成过 Vulkan 视频、停止、手动刷新与重新播放回归。
+- [x] `WATERMeDIA 3.0.1 + Binaries 3.0.1`：完成过 OpenGL 3.3 与 Vulkan 1.4.329 回归。
+- [x] 图片首帧前 `format() == null` 的崩溃路径已在旧测试线上验证修复。
+
+`3.0.0.x` 测试版本在 `WaterMediaVersion` 中低于正式 `3.0.0`。兼容代码可以 best-effort 保留，但未来可能移除；新功能和正式验收只保证 `3.0.0` 及其后的 `3.0.x` 正式发布线。
 
 ## HLS / M3U8
 
 - [x] OneScreen URL 校验允许 HTTP/HTTPS 的 `.m3u8` 地址。
-- [x] WATERMeDIA 3.0.1 将 M3U8/M3U 映射为视频，并解析 HLS Master、Media Playlist 与 IPTV 列表。
+- [x] WATERMeDIA 3 的 M3U8/M3U 映射路径可解析 HLS Master、Media Playlist 与 IPTV 列表。
 - [x] FFmpeg 路径包含 HLS 解复用、直播/VOD 探测、时间戳不连续和 HLS 变体重开处理。
-- [x] 图片引擎首帧前 `format() == null` 的崩溃路径已修复，并有双版本冒烟回归。
-- [x] 本地 HTTP 的 HLS Master → Media Playlist 冒烟测试在 WATERMeDIA `3.0.0.23` 与 `3.0.1` 下均解析出 6000 ms 直播片段。
+- [x] 图片引擎首帧前 `format() == null` 的崩溃路径已修复，并在历史兼容版本上完成冒烟回归。
+- [x] 本地 HTTP 的 HLS Master → Media Playlist 历史冒烟测试曾在旧兼容版本上解析出 6000 ms 直播片段。
 - [x] 全量 Java 25 源码编译、JAR 校验、VOD/直播进度映射和设置默认值冒烟测试通过。
 - [ ] HLS VOD 实机播放、暂停、结束与循环。
 - [ ] HLS 直播实机播放、暂停与重连行为。
@@ -239,22 +249,13 @@ gradlew runGameTestServer
 - [ ] 区块反复加载不产生重复会话。
 - [ ] 错误日志不逐帧增长。
 - [ ] LOD 变化日志只在档位变化时出现。
-- [ ] 720p 与 1080p 测试档位的输出尺寸符合预期。
+- [ ] `LOD=MAX` 输出源尺寸；距离档位变化后的输出尺寸和纹理重建符合预期。
 - [ ] `NativeImage` 像素写入已完成批量 Buffer 优化。
 
-建议临时调试命令：
+当前没有 `/screen debug sessions` 命令。需要观察会话和纹理时，请使用日志筛选、调试器或临时只读诊断；不要把临时诊断命令写成已发布功能：
 
-```text
-/screen debug sessions
-```
-
-输出：
-
-```text
-activeSessions=3
-closingSessions=0
-errorSessions=0
-totalTextureBytesEstimate=...
+```powershell
+Select-String -Path 'run\logs\latest.log' -Pattern 'Media texture ready|Video decode|Media error|Failed to release' -Context 1,2
 ```
 
 ## 发布前检查
@@ -268,3 +269,36 @@ totalTextureBytesEstimate=...
 - [x] OpenGL 路径测试。
 - [x] Vulkan 路径测试（26.2 Vulkan 1.4.329）。
 - [x] 无敏感 URL 出现在日志或测试文件。
+
+## 0.2 Vulkan 高分辨率与 GPU 纹理回归（2026-11-15）
+
+运行环境：
+
+- Minecraft `26.2`
+- Fabric Loader `0.18.6`
+- Vulkan `1.4.329`
+- NVIDIA GeForce RTX 5070 Ti，驱动 `596.49`
+- WATERMeDIA `3.0.0` + Binaries `3.0.0`
+- 仅使用 `E:\waterframes\onescreen` 工作区内的沙箱客户端
+
+结果：
+
+- [x] 编译：`gradlew build --offline --no-daemon --no-configuration-cache` 通过。
+- [x] `onescreen.client.mixins.json` 被加载，3 个 Vulkan 队列同步 Mixin 全部注入。
+- [x] `http://localhost/1080p.mp4` 输出 `1920x1080`，`format=GPU`，`hardwareAccel=true`。
+- [x] `http://localhost/4k.mp4` 输出 `3840x2160`，`format=GPU`；WATERMeDIA 对 AV1 10-bit 片源选择软解。
+- [x] 4K 连续播放超过 1 分钟，无 `Retention wait failed`、`VK_ERROR_DEVICE_LOST` 或 `GpuDeviceLossException`。
+- [x] 修复后没有生成新 crash report。
+- [x] 在 1080p 与 4K 间切换、关闭旧会话并重建新会话正常。
+
+根因与实现：
+
+- WATERMeDIA 的 Vulkan 纹理路径要求使用消费者的 graphics queue，且消费者必须用同一 `queueLock()` 串行化提交和呈现。
+- 旧实现错误地选择了独立 compute/transfer queue，没有跨队列信号量。
+- 现在 OneScreen、Minecraft 提交、队列空闲等待和 swapchain 呈现共用按 `VkQueue` 句柄分配的同一把锁。
+
+后续仍需继续测试：
+
+- [ ] OpenGL 1080p/4K 回归。
+- [ ] Vulkan 4K 连续播放 30 分钟压力测试。
+- [ ] 多屏同时 1080p/4K、快速切换 URL 和停止后立即重播。

@@ -1,5 +1,6 @@
 package dev.onescreen.client.media;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.onescreen.OneScreen;
 import dev.onescreen.screen.ScreenSettings;
 import java.awt.image.BufferedImage;
@@ -20,8 +21,6 @@ import org.jspecify.annotations.Nullable;
  */
 final class MediaSession {
 	private static final int MAX_MEDIA_LOG_LENGTH = 512;
-	private static final int VIDEO_MAX_WIDTH = 1280;
-	private static final int VIDEO_MAX_HEIGHT = 720;
 	private static final long LIVE_RESYNC_DEBOUNCE_NANOS = 1_000_000_000L;
 	private static final long LIVE_REFRESH_PENDING_TIMEOUT_NANOS = 10_000_000_000L;
 
@@ -33,18 +32,22 @@ final class MediaSession {
 	private final AtomicBoolean hlsProbeStarted = new AtomicBoolean();
 	private final AtomicReference<WaterMediaCompat.@Nullable HlsMetadata> hlsMetadata = new AtomicReference<>();
 	private ScreenSettings settings;
-	private double distanceGain = 1.0D;
+	private double audioDistanceGain = 1.0D;
+	private double videoDistanceRatio;
 	private WaterMediaCompat.@Nullable MediaResource mrl;
 	private WaterMediaCompat.@Nullable MediaPlayerHandle player;
 	private WaterMediaCompat.@Nullable MediaEngine graphicsEngine;
 	private WaterMediaCompat.@Nullable MediaEngine imageEngine;
 	private WaterMediaCompat.@Nullable MediaEngine videoEngine;
 	private @Nullable DynamicTexture texture;
+	private @Nullable ExternalMediaTexture externalTexture;
 	private MediaState state = MediaState.RESOLVING;
 	private @Nullable String error;
 	private boolean videoOutput;
+	private boolean gpuVideoOutput;
 	private boolean textureRegistered;
 	private long copiedFrameSequence = -1L;
+	private @Nullable VideoLod appliedVideoLod;
 	private int registeredMediaWidth;
 	private int registeredMediaHeight;
 	private int appliedVolumePercent = -1;
@@ -60,16 +63,25 @@ final class MediaSession {
 	private long refreshPendingSinceNanos;
 	private long lastLiveResyncNanos;
 	private boolean firstFrameLogged;
+	private boolean hardwareAccelerationLogged;
 	private boolean closed;
 	private boolean failureLogged;
 	private @Nullable String lastLoggedStatus;
 
-	MediaSession(final ScreenKey key, final String url, final int loadRevision, final ScreenSettings settings, final double distanceGain) {
+	MediaSession(
+		final ScreenKey key,
+		final String url,
+		final int loadRevision,
+		final ScreenSettings settings,
+		final double audioDistanceGain,
+		final double videoDistanceRatio
+	) {
 		this.key = Objects.requireNonNull(key, "key");
 		this.url = Objects.requireNonNull(url, "url");
 		this.loadRevision = loadRevision;
 		this.settings = Objects.requireNonNull(settings, "settings");
-		this.distanceGain = clampDistanceGain(distanceGain);
+		this.audioDistanceGain = clampDistanceGain(audioDistanceGain);
+		this.videoDistanceRatio = clampDistanceRatio(videoDistanceRatio);
 		this.textureId = textureId(key);
 		try {
 			this.mrl = WaterMediaCompat.mrl(url);
@@ -87,13 +99,19 @@ final class MediaSession {
 		return this.loadRevision;
 	}
 
-	void tick(final ScreenSettings currentSettings, final double currentDistanceGain, final boolean paused) {
+	void tick(
+		final ScreenSettings currentSettings,
+		final double currentAudioDistanceGain,
+		final double currentVideoDistanceRatio,
+		final boolean paused
+	) {
 		ScreenSettings previousSettings = this.settings;
 		boolean settingsChanged = !previousSettings.equals(currentSettings);
 		boolean effectivePaused = this.manualPauseOverride != null ? this.manualPauseOverride : paused;
 		boolean resumed = this.hasPauseState && this.lastPausedState && !effectivePaused;
 		this.settings = Objects.requireNonNull(currentSettings, "currentSettings");
-		this.distanceGain = clampDistanceGain(currentDistanceGain);
+		this.audioDistanceGain = clampDistanceGain(currentAudioDistanceGain);
+		this.videoDistanceRatio = clampDistanceRatio(currentVideoDistanceRatio);
 		this.pauseRequested = effectivePaused;
 		if (!currentSettings.refreshOnResume()) {
 			this.refreshPending = false;
@@ -120,6 +138,7 @@ final class MediaSession {
 		if (this.player != null) {
 			WaterMediaCompat.MediaPlayerHandle current = this.player;
 			this.applyPlayerSettings();
+			this.applyVideoLod(current);
 			this.updatePlayer();
 			if (this.player != null) {
 				this.startHlsProbeIfNeeded(this.isLivePlayer(current));
@@ -305,22 +324,16 @@ final class MediaSession {
 		this.videoOutput = source.kind() == WaterMediaCompat.MediaKind.VIDEO
 			|| source.kind() == WaterMediaCompat.MediaKind.UNKNOWN;
 		try {
-			Supplier<Object> graphicsSupplier;
 			if (image) {
 				WaterMediaCompat.MediaEngine engine = WaterMediaCompat.headlessEngine();
 				this.graphicsEngine = engine;
 				this.imageEngine = engine;
-				graphicsSupplier = engine::handle;
+				this.player = WaterMediaCompat.createPlayer(current, engine::handle);
 			} else if (this.videoOutput) {
-				WaterMediaCompat.MediaEngine engine = WaterMediaCompat.awtEngine(this.videoFrameSequence::incrementAndGet);
-				this.graphicsEngine = engine;
-				this.videoEngine = engine;
-				graphicsSupplier = engine::handle;
+				this.player = this.createVideoPlayer(current);
 			} else {
-				graphicsSupplier = () -> null;
+				this.player = WaterMediaCompat.createPlayer(current, () -> null);
 			}
-
-			this.player = WaterMediaCompat.createPlayer(current, graphicsSupplier);
 		} catch (RuntimeException exception) {
 			this.fail("无法创建媒体播放器", exception);
 			return;
@@ -331,13 +344,61 @@ final class MediaSession {
 			return;
 		}
 		if (this.videoOutput) {
-			this.player.maxSize(VIDEO_MAX_WIDTH, VIDEO_MAX_HEIGHT);
+			this.applyVideoLod(this.player, true);
 		}
 		this.applyPlayerSettings();
 		this.player.start();
 		this.manuallyStopped = false;
 		this.appliedPaused = null;
 		this.applyPauseState(this.player);
+	}
+
+	private WaterMediaCompat.@Nullable MediaPlayerHandle createVideoPlayer(
+		final WaterMediaCompat.MediaResource resource
+	) {
+		Minecraft minecraft = Minecraft.getInstance();
+		WaterMediaCompat.MediaEngine gpuEngine = null;
+		try {
+			gpuEngine = WaterMediaCompat.gpuEngine(minecraft.getRunningThread(), minecraft::execute);
+		} catch (RuntimeException | LinkageError exception) {
+			OneScreen.LOGGER.warn("GPU media engine initialization failed at {}; using CPU texture fallback", this.key.pos(), exception);
+		}
+
+		if (gpuEngine != null) {
+			this.graphicsEngine = gpuEngine;
+			this.videoEngine = gpuEngine;
+			this.gpuVideoOutput = true;
+			try {
+				WaterMediaCompat.MediaPlayerHandle created = WaterMediaCompat.createPlayer(resource, gpuEngine::handle);
+				if (created != null) {
+					OneScreen.LOGGER.info(
+						"Video at {} uses WATERMeDIA GPU texture path ({})",
+						this.key.pos(),
+						RenderSystem.getDevice().getDeviceInfo().backendName()
+					);
+					return created;
+				}
+			} catch (RuntimeException | LinkageError exception) {
+				OneScreen.LOGGER.warn("GPU video player creation failed at {}; using CPU texture fallback", this.key.pos(), exception);
+			}
+			this.releaseEngine(gpuEngine);
+			this.graphicsEngine = null;
+			this.videoEngine = null;
+			this.gpuVideoOutput = false;
+		}
+
+		WaterMediaCompat.MediaEngine cpuEngine = WaterMediaCompat.awtEngine(this.videoFrameSequence::incrementAndGet);
+		this.graphicsEngine = cpuEngine;
+		this.videoEngine = cpuEngine;
+		this.gpuVideoOutput = false;
+		try {
+			return WaterMediaCompat.createPlayer(resource, cpuEngine::handle);
+		} catch (RuntimeException | LinkageError exception) {
+			this.releaseEngine(cpuEngine);
+			this.graphicsEngine = null;
+			this.videoEngine = null;
+			throw exception;
+		}
 	}
 
 	private void updatePlayer() {
@@ -365,7 +426,7 @@ final class MediaSession {
 		}
 
 		float masterVolume = this.settings.volume();
-		int volumePercent = Math.round(masterVolume * (float) this.distanceGain * 100.0F);
+		int volumePercent = Math.round(masterVolume * (float) this.audioDistanceGain * 100.0F);
 		volumePercent = Math.max(0, Math.min(100, volumePercent));
 		if (volumePercent != this.appliedVolumePercent) {
 			current.volume(volumePercent);
@@ -481,6 +542,10 @@ final class MediaSession {
 			this.updateImageTexture();
 			return;
 		}
+		if (this.gpuVideoOutput) {
+			this.updateGpuVideoTexture(this.videoEngine);
+			return;
+		}
 
 		WaterMediaCompat.MediaEngine engine = this.videoEngine;
 		long sequence = this.videoFrameSequence.get();
@@ -516,6 +581,39 @@ final class MediaSession {
 			this.copiedFrameSequence = sequence;
 		} catch (RuntimeException exception) {
 			this.fail("无法复制视频帧", exception);
+		}
+	}
+
+	private void updateGpuVideoTexture(final WaterMediaCompat.MediaEngine engine) {
+		long textureHandle = engine.texture();
+		int width = engine.width();
+		int height = engine.height();
+		if (textureHandle == 0L || width <= 0 || height <= 0) {
+			return;
+		}
+		if (this.textureRegistered
+			&& this.externalTexture != null
+			&& this.registeredMediaWidth == width
+			&& this.registeredMediaHeight == height) {
+			return;
+		}
+
+		try {
+			this.unregisterTexture();
+			ExternalMediaTexture created = ExternalMediaTexture.create(
+				engine::texture,
+				width,
+				height,
+				"onescreen video " + this.key.pos().toShortString()
+			);
+			Minecraft.getInstance().getTextureManager().register(this.textureId, created);
+			this.externalTexture = created;
+			this.textureRegistered = true;
+			this.registeredMediaWidth = width;
+			this.registeredMediaHeight = height;
+			this.logFirstFrame(width, height, "GPU");
+		} catch (RuntimeException exception) {
+			this.fail("无法接入 GPU 视频纹理", exception);
 		}
 	}
 
@@ -601,13 +699,41 @@ final class MediaSession {
 			return;
 		}
 		this.firstFrameLogged = true;
-		OneScreen.LOGGER.info("Media texture ready at {} ({}x{}, format={})", this.key.pos(), width, height, format);
+		OneScreen.LOGGER.info(
+			"Media texture ready at {} ({}x{}, format={}, backend={})",
+			this.key.pos(),
+			width,
+			height,
+			format,
+			RenderSystem.getDevice().getDeviceInfo().backendName()
+		);
+		this.logHardwareAcceleration();
+	}
+
+	private void logHardwareAcceleration() {
+		WaterMediaCompat.MediaPlayerHandle current = this.player;
+		if (this.hardwareAccelerationLogged || !this.videoOutput || current == null) {
+			return;
+		}
+		try {
+			boolean hardware = current.hardwareAcceleration();
+			this.hardwareAccelerationLogged = true;
+			OneScreen.LOGGER.info(
+				"Video decode at {}: hardwareAccel={}{}",
+				this.key.pos(),
+				hardware,
+				this.gpuVideoOutput ? " (GPU texture path)" : " (CPU texture fallback)"
+			);
+		} catch (RuntimeException exception) {
+			OneScreen.LOGGER.debug("WATERMeDIA did not expose hardware acceleration state at {}", this.key.pos(), exception);
+		}
 	}
 
 	private void unregisterTexture() {
 		this.textureRegistered = false;
 		this.copiedFrameSequence = -1L;
 		this.texture = null;
+		this.externalTexture = null;
 		try {
 			Minecraft.getInstance().getTextureManager().release(this.textureId);
 		} catch (RuntimeException exception) {
@@ -616,19 +742,50 @@ final class MediaSession {
 	}
 
 	private void releasePlayer() {
+		this.unregisterTexture();
 		WaterMediaCompat.MediaPlayerHandle current = this.player;
+		WaterMediaCompat.MediaEngine engine = this.graphicsEngine;
 		this.player = null;
 		this.graphicsEngine = null;
 		this.imageEngine = null;
 		this.videoEngine = null;
-		if (current == null) {
+		this.gpuVideoOutput = false;
+		this.appliedVideoLod = null;
+		this.hardwareAccelerationLogged = false;
+		if (current != null) {
+			try {
+				current.release();
+			} catch (RuntimeException exception) {
+				OneScreen.LOGGER.warn("Failed to release media player for {}", this.key.pos(), exception);
+			}
+		}
+		if (engine != null) {
+			this.releaseEngine(engine);
+		}
+	}
+
+	private void releaseEngine(final WaterMediaCompat.MediaEngine engine) {
+		try {
+			engine.release();
+		} catch (RuntimeException exception) {
+			OneScreen.LOGGER.warn("Failed to release media engine for {}", this.key.pos(), exception);
+		}
+	}
+
+	private void applyVideoLod(final WaterMediaCompat.MediaPlayerHandle player) {
+		this.applyVideoLod(player, false);
+	}
+
+	private void applyVideoLod(final WaterMediaCompat.MediaPlayerHandle player, final boolean force) {
+		if (!this.videoOutput) {
 			return;
 		}
-		try {
-			current.release();
-		} catch (RuntimeException exception) {
-			OneScreen.LOGGER.warn("Failed to release media player for {}", this.key.pos(), exception);
+		VideoLod next = VideoLod.select(this.videoDistanceRatio, this.appliedVideoLod);
+		if (!force && next == this.appliedVideoLod) {
+			return;
 		}
+		player.lod(next.name());
+		this.appliedVideoLod = next;
 	}
 
 	private void fail(final String message, final @Nullable Throwable cause) {
@@ -650,6 +807,13 @@ final class MediaSession {
 			return 0.0D;
 		}
 		return Math.max(0.0D, Math.min(1.0D, gain));
+	}
+
+	private static double clampDistanceRatio(final double ratio) {
+		if (!Double.isFinite(ratio)) {
+			return 1.0D;
+		}
+		return Math.max(0.0D, Math.min(1.0D, ratio));
 	}
 
 	private static Identifier textureId(final ScreenKey key) {
