@@ -1,0 +1,24 @@
+{
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "particle": "onescreen:block/screen_side",
+    "frame": "onescreen:block/screen_frame",
+    "side": "onescreen:block/screen_side",
+    "top": "onescreen:block/screen_top"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 15],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": { "texture": "#frame", "uv": [0, 0, 16, 16] },
+        "south": { "texture": "#frame", "uv": [0, 0, 16, 16] },
+        "east": { "texture": "#side", "uv": [0, 0, 1, 16] },
+        "west": { "texture": "#side", "uv": [0, 0, 1, 16] },
+        "up": { "texture": "#top", "uv": [0, 0, 16, 1] },
+        "down": { "texture": "#top", "uv": [0, 0, 16, 1] }
+      }
+    }
+  ]
+}

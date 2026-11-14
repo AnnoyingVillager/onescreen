@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "onescreen",
+	"version": "${version}",
+	"name": "OneScreen",
+	"description": "A focused Fabric screen mod for images and video in Minecraft.",
+	"authors": [
+		"AnnoyingVillager",
+		"OneScreen contributors"
+	],
+	"license": "MIT",
+	"icon": "assets/onescreen/icon.png",
+	"contact": {
+		"homepage": "https://github.com/AnnoyingVillager/onescreen",
+		"sources": "https://github.com/AnnoyingVillager/onescreen",
+		"issues": "https://github.com/AnnoyingVillager/onescreen/issues"
+	},
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.onescreen.OneScreen"
+		],
+		"client": [
+			"dev.onescreen.client.OneScreenClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.18.0",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": ">=0.152.0+26.2",
+		"watermedia": ">=3.0.0.23",
+		"watermedia_binaries": ">=3.0.0"
+	}
+}
