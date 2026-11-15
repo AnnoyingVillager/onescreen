@@ -16,7 +16,7 @@ OneScreen 是 Minecraft Java Edition 26.2 / Fabric 的薄型屏幕模组。玩�
 | Fabric API | `0.152.0+26.2` |
 | Gradle | `9.8.2` |
 | Loom | `1.19.4` |
-| OneScreen 源码版本 | `0.2.1`（未发布） |
+| OneScreen 源码版本 | `0.2.1`（已发布） |
 | WATERMeDIA | `3.0.0` |
 | WATERMeDIA Binaries | `3.0.0` |
 

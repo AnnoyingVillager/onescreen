@@ -28,7 +28,7 @@ Build outputs:
 - `build/libs/onescreen-0.2.1.jar`: mod JAR.
 - `build/libs/onescreen-0.2.1-sources.jar`: sources JAR.
 
-The latest public release is `0.2.0`; the current source version is `0.2.1`, and no `v0.2.1` release has been created. Check the actual version in `gradle.properties` before building.
+The latest public release and current source version are both `0.2.1`. Check the actual version in `gradle.properties` before building.
 
 ## Local run
 

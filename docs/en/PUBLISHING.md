@@ -2,9 +2,9 @@
 
 ## Current version status
 
-- Latest public release: `0.2.0`.
-- Current source version: `0.2.1`; no `v0.2.1` tag or release has been created yet.
-- Tag format: `v<version>`; the next release can use `v0.2.1`.
+- Latest public release: `0.2.1`.
+- Current source version: `0.2.1`, corresponding to GitHub release tag `v0.2.1`.
+- Tag format: `v<version>`, for example `v0.2.1`.
 - The tag version must exactly match `version` in `gradle.properties`.
 
 Before a release, confirm or update:

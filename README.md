@@ -7,7 +7,7 @@ OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模�
 > [!IMPORTANT]
 > **本项目是一个由生成式 AI 主导完成的项目。** 它不是 Mojang、Fabric、WATERMeDIA 或其作者的官方项目，也不是由成熟商业团队维护的产品。代码、文档、构建配置和排错记录主要由生成式 AI 生成与整理，人类用户提供需求、运行环境和实机反馈。使用前请备份世界；建议先在测试世界中验证。
 
-> 当前状态：当前源码版本为 `0.2.1`，最近公开 Release 为 `0.2.0`。`0.2.1` 修复画框对不完整方块的贴附与悬空行为，并修复 WATERMeDIA 失败 MRL 缓存导致媒体无法刷新恢复的问题。
+> 当前状态：最新公开 Release 为 `0.2.1`。该版本修复画框对不完整方块的贴附与悬空行为，并修复 WATERMeDIA 失败 MRL 缓存导致媒体无法刷新恢复的问题。
 
 > 下载：[GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · 源码与问题反馈：[GitHub 仓库](https://github.com/AnnoyingVillager/onescreen)
 

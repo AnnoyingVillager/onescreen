@@ -12,7 +12,7 @@
 | Loom | `1.19.4` | 当前实际构建插件版本 |
 | WATERMeDIA | `3.0.0` | 0.2 正式基线 |
 | WATERMeDIA Binaries | `3.0.0` | 与 WATERMeDIA 发布线配套 |
-| OneScreen | `0.2.1` | 当前源码版本，未发布 |
+| OneScreen | `0.2.1` | 当前已发布版本 |
 
 参考：
 

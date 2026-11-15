@@ -7,7 +7,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 > [!IMPORTANT]
 > **This project is primarily developed with generative AI.** It is not an official Mojang, Fabric, or WATERMeDIA project and is not maintained by a mature commercial team. Code, documentation, build configuration, and troubleshooting notes are largely generated and organized by AI, while the human user provides requirements, testing environments, and in-game feedback. Back up your worlds and test new versions in a separate world first.
 
-> Current status: the source version is `0.2.1`; the latest public release is `0.2.0`. Version `0.2.1` fixes frame placement and suspension on non-full blocks and recovers media when WATERMeDIA has cached a failed MRL.
+> Current status: the latest public release is `0.2.1`. It fixes frame placement and suspension on non-full blocks and recovers media when WATERMeDIA has cached a failed MRL.
 
 > Download: [GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · Source and issue tracker: [GitHub repository](https://github.com/AnnoyingVillager/onescreen)
 

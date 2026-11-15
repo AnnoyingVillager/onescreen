@@ -119,8 +119,8 @@ GpuDeviceLossException: VK_ERROR_DEVICE_LOST
 
 ## 当前 Git 状态
 
-- 最近公开 Release 为 `v0.2.0`；历史基线 `v0.1.2` 为 `c0c2660`。
-- 当前源码版本升级为 `0.2.1`，位于 `main`；尚未创建 `v0.2.1` 标签或 Release。
+- 最新公开 Release 为 `v0.2.1`；历史基线 `v0.1.2` 为 `c0c2660`。
+- `v0.2.1` 标签指向发布提交 `a74cfca`，已由 GitHub Actions 自动构建并发布主 JAR、sources JAR 和 SHA-256。
 - 本地仍可能存在 `.codex-*` 临时文件、`config/` 和运行目录；这些内容不进入提交。
 - 未获用户明确要求，不要自行提交、推送、打标签或发布。
 
