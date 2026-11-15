@@ -178,13 +178,13 @@ $env:GRADLE_USER_HOME='E:\waterframes\.gradle-user-home'
 - `agents/DEVELOPMENT-LOG.md`：是否需要追加本次结果。
 - `agents/PROJECT-CONTEXT.md`：架构/版本/约束是否变化。
 - `agents/README.md`：当前状态和下一步是否变化。
-- `docs/`：人类可读的架构、API、测试、决策是否需要同步。
+- `docs/zh-cn/` 与 `docs/en/`：对应语言的人类架构、API、测试和决策文档是否需要同步。
 
 文档要求：
 
 - Agent 文档只在 `agents/` 维护。
-- README 和 `docs/` 面向人类，使用完整使用说明和实现原理。
-- 不保留失效链接、重复交接文档或历史临时计划。
+- `README.md`、`README.en.md` 和 `docs/zh-cn/`、`docs/en/` 面向人类，分别维护完整使用说明和实现原理。
+- 不保留失效链接、重复交接文档或历史临时计划；两种语言文档必须保持同构文件名。
 - 重要修复必须写清根因、影响、修复、验证和剩余风险。
 
 ## 10. 结束前检查

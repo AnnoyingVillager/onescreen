@@ -120,7 +120,7 @@ Common commands:
 /screen config debug <on|off>
 ```
 
-See the [command reference](docs/COMMAND-REFERENCE.md) for details. The linked development documents are currently written in Chinese.
+See the [command reference](docs/en/COMMAND-REFERENCE.md) for details.
 
 ## Building from source
 
@@ -158,25 +158,23 @@ Artifacts are written to `build/libs/`. GitHub Actions builds every push and pul
 
 ### Human usage and development documentation
 
-- [Scope and acceptance criteria](docs/SCOPE.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Version and API constraints](docs/API-VERSIONS.md)
-- [Rendering implementation](docs/RENDERING.md)
-- [Media, GPU textures, and audio](docs/MEDIA-AUDIO.md)
-- [High-resolution and hardware decoding](docs/HIGH-RESOLUTION-MEDIA.md)
-- [Networking and commands](docs/NETWORK-SYNC.md)
-- [Configuration](docs/CONFIGURATION.md)
-- [Command reference](docs/COMMAND-REFERENCE.md)
-- [Testing](docs/TESTING.md)
-- [Architecture decisions](docs/DECISIONS.md)
-- [Risk register](docs/RISKS.md)
-- [Development and verification](docs/DEVELOPMENT.md)
-- [Publishing](docs/PUBLISHING.md)
-- [Changelog](CHANGELOG.md)
+See the complete [English documentation index](docs/en/README.md).
 
-### Maintenance handoff
-
-- [Agent onboarding](agents/README.md)
+- [Scope and acceptance criteria](docs/en/SCOPE.md)
+- [Architecture](docs/en/ARCHITECTURE.md)
+- [Version and API constraints](docs/en/API-VERSIONS.md)
+- [Rendering implementation](docs/en/RENDERING.md)
+- [Media, GPU textures, and audio](docs/en/MEDIA-AUDIO.md)
+- [High-resolution and hardware decoding](docs/en/HIGH-RESOLUTION-MEDIA.md)
+- [Networking and commands](docs/en/NETWORK-SYNC.md)
+- [Configuration](docs/en/CONFIGURATION.md)
+- [Command reference](docs/en/COMMAND-REFERENCE.md)
+- [Testing](docs/en/TESTING.md)
+- [Architecture decisions](docs/en/DECISIONS.md)
+- [Risk register](docs/en/RISKS.md)
+- [Development and verification](docs/en/DEVELOPMENT.md)
+- [Publishing](docs/en/PUBLISHING.md)
+- [Changelog](CHANGELOG.en.md)
 
 ## License
 

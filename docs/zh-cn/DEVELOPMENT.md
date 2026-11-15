@@ -114,4 +114,4 @@ E:\waterframes\_watermedia-sources
 
 ## Agent 维护入口
 
-项目主要由生成式 AI 参与实现。维护者或新的自动化 Agent 若需要执行开发任务，应先阅读 [agents/README.md](../agents/README.md) 中的项目上下文、开发日志和执行手册；本文只保留人类可复现的环境与验证方法。
+项目主要由生成式 AI 参与实现。维护者或新的自动化 Agent 若需要执行开发任务，应先阅读 [agents/README.md](../../agents/README.md) 中的项目上下文、开发日志和执行手册；本文只保留人类可复现的环境与验证方法。

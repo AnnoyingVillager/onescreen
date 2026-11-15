@@ -2,6 +2,15 @@
 
 本项目遵循语义化版本。发布日期使用本地日期 `YYYY-MM-DD`。
 
+## [Unreleased]
+
+### Documentation
+
+- Split human documentation into `docs/zh-cn/` and `docs/en/`.
+- Added complete English counterparts for all user and secondary-development documents.
+- Updated Chinese and English README, Agent documentation, and internal links to the language-specific document trees.
+- Added `CHANGELOG.en.md` for English readers.
+
 ## [0.2.0] - 2026-11-15
 
 高分辨率媒体与 GPU 纹理更新。

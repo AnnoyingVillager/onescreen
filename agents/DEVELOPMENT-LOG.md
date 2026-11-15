@@ -94,6 +94,7 @@ GpuDeviceLossException: VK_ERROR_DEVICE_LOST
 - README 与 `docs/` 重新定位为人类使用说明和二次开发实现原理；补充 GPU/CPU 路径、Vulkan 队列契约、当前命令树、配置、测试和发布流程。
 - 清理旧类名、失效文件名、错误的 `debug sessions` 命令、不存在的 `getRenderBoundingBox` 签名说明和旧固定分辨率建议。
 - 所有本地命令示例统一使用 PowerShell；Agent 文档明确只允许工作区内沙箱客户端，禁止 PCL2 和宿主机客户端。
+- 人类文档进一步拆分为 `docs/zh-cn/` 与 `docs/en/`；英文 README、英文 Changelog 和全部英文开发文档已补齐，内部链接按语言树分别维护。
 
 ## 当前 Git 状态
 

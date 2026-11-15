@@ -88,7 +88,7 @@ WATERMeDIA 的版本排序并不等同于普通四段版本号：
 }
 ```
 
-单机集成服务端和专用服务器都可以提高这两个上限，分别允许到 `4096` 格和 `1024` 格。修改后重启游戏或服务端；编辑器打开时会使用服务端当前生效的上限。实际可见距离仍受客户端区块渲染距离和服务端区块加载范围限制。详细说明见 [配置文件](docs/CONFIGURATION.md)。
+单机集成服务端和专用服务器都可以提高这两个上限，分别允许到 `4096` 格和 `1024` 格。修改后重启游戏或服务端；编辑器打开时会使用服务端当前生效的上限。实际可见距离仍受客户端区块渲染距离和服务端区块加载范围限制。详细说明见 [配置文件](docs/zh-cn/CONFIGURATION.md)。
 
 ## 使用
 
@@ -116,7 +116,7 @@ WATERMeDIA 的版本排序并不等同于普通四段版本号：
 /screen config debug <on|off>
 ```
 
-完整参数见 [命令参考](docs/COMMAND-REFERENCE.md)。
+完整参数见 [命令参考](docs/zh-cn/COMMAND-REFERENCE.md)。
 
 ## 从源码构建
 
@@ -149,20 +149,22 @@ Windows 使用：
 
 ### 人类使用与开发文档
 
-- [范围与验收标准](docs/SCOPE.md)
-- [系统架构](docs/ARCHITECTURE.md)
-- [版本与 API 约束](docs/API-VERSIONS.md)
-- [渲染实现](docs/RENDERING.md)
-- [媒体、GPU 纹理与音频](docs/MEDIA-AUDIO.md)
-- [高分辨率与硬件解码说明](docs/HIGH-RESOLUTION-MEDIA.md)
-- [网络同步与命令](docs/NETWORK-SYNC.md)
-- [配置文件](docs/CONFIGURATION.md)
-- [命令参考](docs/COMMAND-REFERENCE.md)
-- [测试计划](docs/TESTING.md)
-- [架构决策记录](docs/DECISIONS.md)
-- [风险清单](docs/RISKS.md)
-- [开发环境与验证](docs/DEVELOPMENT.md)
-- [发布流程](docs/PUBLISHING.md)
+完整目录见 [中文文档索引](docs/zh-cn/README.md)。
+
+- [范围与验收标准](docs/zh-cn/SCOPE.md)
+- [系统架构](docs/zh-cn/ARCHITECTURE.md)
+- [版本与 API 约束](docs/zh-cn/API-VERSIONS.md)
+- [渲染实现](docs/zh-cn/RENDERING.md)
+- [媒体、GPU 纹理与音频](docs/zh-cn/MEDIA-AUDIO.md)
+- [高分辨率与硬件解码说明](docs/zh-cn/HIGH-RESOLUTION-MEDIA.md)
+- [网络同步与命令](docs/zh-cn/NETWORK-SYNC.md)
+- [配置文件](docs/zh-cn/CONFIGURATION.md)
+- [命令参考](docs/zh-cn/COMMAND-REFERENCE.md)
+- [测试计划](docs/zh-cn/TESTING.md)
+- [架构决策记录](docs/zh-cn/DECISIONS.md)
+- [风险清单](docs/zh-cn/RISKS.md)
+- [开发环境与验证](docs/zh-cn/DEVELOPMENT.md)
+- [发布流程](docs/zh-cn/PUBLISHING.md)
 - [更新日志](CHANGELOG.md)
 
 ### 维护与交接

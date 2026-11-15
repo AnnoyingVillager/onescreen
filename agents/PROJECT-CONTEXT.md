@@ -186,22 +186,24 @@ Minecraft VulkanDevice
 
 ## 人类文档索引
 
-只有需要理解具体实现或修改人类文档时才进入这些文件；Agent 启动规则仍以 `agents/` 为准。
+人类文档按语言分为 `docs/zh-cn/` 与 `docs/en/`，两边保持相同文件名。修改任一功能时，应同步对应语言的同主题文档。
 
 - `README.md` / `README.en.md`：安装、前置、公开版本、使用和已知限制。
-- `docs/COMMAND-REFERENCE.md`：准确命令语法、权限和值域。
-- `docs/CONFIGURATION.md`：`config/onescreen.json` 字段和生效方式。
-- `docs/SCOPE.md`：当前功能范围、非目标和 0.2 验收门槛。
-- `docs/ARCHITECTURE.md`：source set、核心对象、网络和媒体数据流。
-- `docs/RENDERING.md`：六向几何、UV、画面适配、debug 和距离剔除。
-- `docs/MEDIA-AUDIO.md`：CPU/OpenGL/Vulkan 路径、LOD、播放控制和音频。
-- `docs/NETWORK-SYNC.md`：方块实体同步、编辑器 payload、命令和 URL 校验。
-- `docs/API-VERSIONS.md`：Minecraft、Fabric、WATERMeDIA 和反射边界。
-- `docs/HIGH-RESOLUTION-MEDIA.md`：高分辨率与硬件解码的技术评估和历史背景。
-- `docs/TESTING.md`：完整测试矩阵、已通过项和待办项。
-- `docs/DECISIONS.md`：ADR 和已取代决策。
-- `docs/RISKS.md`：当前风险和缓解措施。
-- `docs/GLOSSARY.md`：渲染、媒体、Vulkan 和网络术语。
-- `docs/DEVELOPMENT.md`：人类开发环境和基础验证流程。
-- `docs/PUBLISHING.md`：版本、构建、GitHub Actions 和发布门槛。
-- `CHANGELOG.md`、`.github/release-notes/`：历史发布记录。
+- `docs/README.md`：文档语言入口。
+- `docs/zh-cn/README.md` / `docs/en/README.md`：各自语言的完整文档索引。
+- `COMMAND-REFERENCE.md`：命令语法、权限和值域。
+- `CONFIGURATION.md`：`config/onescreen.json` 字段和生效方式。
+- `SCOPE.md`：功能范围、非目标和验收门槛。
+- `ARCHITECTURE.md`：source set、核心对象、网络和媒体数据流。
+- `RENDERING.md`：六向几何、UV、画面适配、debug 和距离剔除。
+- `MEDIA-AUDIO.md`：CPU/OpenGL/Vulkan 路径、LOD、播放控制和音频。
+- `NETWORK-SYNC.md`：方块实体同步、编辑器 payload、命令和 URL 校验。
+- `API-VERSIONS.md`：Minecraft、Fabric、WATERMeDIA 和反射边界。
+- `HIGH-RESOLUTION-MEDIA.md`：高分辨率与硬件解码的技术评估和历史背景。
+- `TESTING.md`：完整测试矩阵、已通过项和待办项。
+- `DECISIONS.md`：ADR 和已取代决策。
+- `RISKS.md`：当前风险和缓解措施。
+- `GLOSSARY.md`：渲染、媒体、Vulkan 和网络术语。
+- `DEVELOPMENT.md`：人类开发环境和基础验证流程。
+- `PUBLISHING.md`：版本、构建、GitHub Actions 和发布门槛。
+- `CHANGELOG.md` / `CHANGELOG.en.md`：中英文发布历史。

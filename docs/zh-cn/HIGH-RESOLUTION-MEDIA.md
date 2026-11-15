@@ -362,8 +362,8 @@ visualResult=...
 - WATERMeDIA 3.0.1 播放器：`_watermedia-sources/watermedia-3.0.1/org/watermedia/api/player/FFMediaPlayer.java`
 - WATERMeDIA 3.0.1 缩放 API：`_watermedia-sources/watermedia-3.0.1/org/watermedia/api/player/MediaPlayer.java`
 - WATERMeDIA 3.0.1 AWT 输出：`_watermedia-sources/watermedia-3.0.1/org/watermedia/api/player/AWTEngine.java`
-- 当前 OneScreen 视频路径：[`src/client/java/dev/onescreen/client/media/MediaSession.java`](../src/client/java/dev/onescreen/client/media/MediaSession.java)
-- 人类可读的 GPU/CPU 媒体实现：[docs/MEDIA-AUDIO.md](MEDIA-AUDIO.md)
+- 当前 OneScreen 视频路径：[`src/client/java/dev/onescreen/client/media/MediaSession.java`](../../src/client/java/dev/onescreen/client/media/MediaSession.java)
+- 人类可读的 GPU/CPU 媒体实现：[MEDIA-AUDIO.md](MEDIA-AUDIO.md)
 
 外部参考资料：
 

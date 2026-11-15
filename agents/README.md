@@ -8,7 +8,7 @@
 2. [PROJECT-CONTEXT.md](PROJECT-CONTEXT.md)：了解产品、架构、代码地图和必须知道的技术背景。
 3. [DEVELOPMENT-LOG.md](DEVELOPMENT-LOG.md)：了解已经做过什么、哪些结论已验证、哪些只是历史记录。
 4. [RUNBOOK.md](RUNBOOK.md)：按其中的 PowerShell、沙箱和测试流程执行工作。
-5. 按任务阅读 `docs/` 中的人类开发文档。开始修改前先检查 `git status --short`；不要回退不属于当前任务的未提交改动。
+5. 按任务阅读 `docs/zh-cn/` 或 `docs/en/` 中的人类开发文档。开始修改前先检查 `git status --short`；不要回退不属于当前任务的未提交改动。
 
 ## 当前状态（2026-11-15）
 
@@ -69,7 +69,7 @@
 
 - `agents/`：Agent 规则、上下文、日志、运行与交接手册。
 - `README.md` / `README.en.md`：用户安装、使用、兼容版本与下载。
-- `docs/ARCHITECTURE.md`、`RENDERING.md`、`MEDIA-AUDIO.md`、`NETWORK-SYNC.md`：二次开发实现原理。
-- `docs/TESTING.md`：人类可执行测试矩阵。
-- `docs/DECISIONS.md`：面向开发者的架构决策记录。
-- `docs/API-VERSIONS.md`：依赖版本和 API 兼容边界。
+- `docs/zh-cn/`、`docs/en/`：中英文人类使用和二次开发文档；两种语言保持同构文件名与交叉链接。
+- `docs/zh-cn/TESTING.md`、`docs/en/TESTING.md`：人类可执行测试矩阵。
+- `docs/zh-cn/DECISIONS.md`、`docs/en/DECISIONS.md`：面向开发者的架构决策记录。
+- `docs/zh-cn/API-VERSIONS.md`、`docs/en/API-VERSIONS.md`：依赖版本和 API 兼容边界。
