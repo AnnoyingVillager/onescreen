@@ -12,7 +12,7 @@
 | Loom | `1.19.4` | Current build plugin version |
 | WATERMeDIA | `3.0.0` | Official 0.2 baseline |
 | WATERMeDIA Binaries | `3.0.0` | Must match the WATERMeDIA release line |
-| OneScreen | `0.2.0` | Current released version |
+| OneScreen | `0.2.1` | Current source version; not released |
 
 References:
 

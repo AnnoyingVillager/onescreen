@@ -100,7 +100,7 @@ Alignment offsets use the same geometry as media size and in-plane rotation, kee
 /screen rotation 120 64 -37 30
 ```
 
-The range is `-180` through `180` degrees and covers every orientation within the screen plane. Rotation does not change the attached block face; it changes the media quad, alignment offsets, and audio center within that plane.
+The range is `-180` through `180` degrees and covers every orientation within the screen plane. Rotation does not change the frame mounting orientation; it changes the media quad, alignment offsets, and audio center within that plane.
 
 ## Hide the frame model
 

@@ -5,7 +5,6 @@ import dev.onescreen.editor.ScreenEditorNetworking;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -13,8 +12,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
@@ -63,43 +60,7 @@ public final class ScreenBlock extends BaseEntityBlock {
 
 	@Override
 	public @Nullable BlockState getStateForPlacement(final BlockPlaceContext context) {
-		Direction clickedFace = context.getClickedFace();
-		BlockState clickedFaceState = this.defaultBlockState().setValue(FACING, clickedFace);
-		if (clickedFaceState.canSurvive(context.getLevel(), context.getClickedPos())) {
-			return clickedFaceState;
-		}
-
-		for (Direction direction : context.getNearestLookingDirections()) {
-			BlockState candidate = this.defaultBlockState().setValue(FACING, direction);
-			if (candidate.canSurvive(context.getLevel(), context.getClickedPos())) {
-				return candidate;
-			}
-		}
-		return null;
-	}
-
-	@Override
-	protected boolean canSurvive(final BlockState state, final LevelReader level, final BlockPos pos) {
-		Direction facing = state.getValue(FACING);
-		BlockPos supportPos = pos.relative(facing.getOpposite());
-		return level.getBlockState(supportPos).isFaceSturdy(level, supportPos, facing);
-	}
-
-	@Override
-	protected BlockState updateShape(
-		final BlockState state,
-		final LevelReader level,
-		final ScheduledTickAccess ticks,
-		final BlockPos pos,
-		final Direction directionToNeighbour,
-		final BlockPos neighbourPos,
-		final BlockState neighbourState,
-		final RandomSource random
-	) {
-		if (directionToNeighbour == state.getValue(FACING).getOpposite() && !state.canSurvive(level, pos)) {
-			return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
-		}
-		return super.updateShape(state, level, ticks, pos, directionToNeighbour, neighbourPos, neighbourState, random);
+		return this.defaultBlockState().setValue(FACING, context.getClickedFace());
 	}
 
 	@Override

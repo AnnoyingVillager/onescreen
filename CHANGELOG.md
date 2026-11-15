@@ -2,7 +2,15 @@
 
 本项目遵循语义化版本。发布日期使用本地日期 `YYYY-MM-DD`。
 
-## [Unreleased]
+## [0.2.1] - 2026-11-15
+
+### 修复
+
+- 屏幕画框不再要求完整、坚固的承托方块，可放置在楼梯、栅栏等不完整方块的可点击表面。
+- 画框不再保存或校验承托方块；原本贴附的方块被破坏后，画框会保持悬空而不会自毁或掉落。
+- 修复本地 HTTP 服务离线时 WATERMeDIA 按 URL 缓存失败 MRL 的问题；服务恢复后点击右键菜单中的 `↻` 会重新生成可解析资源并恢复播放。
+- 实机验证失败缓存恢复后，4K 视频可重新进入 `PLAYING`，并以 `3840x2160`、`format=GPU`、Vulkan 后端显示。
+
 
 ### Documentation
 
@@ -41,6 +49,8 @@
 
 - 保持 WATERMeDIA `3.0.0.23` + Binaries `3.0.0.6` 与 WATERMeDIA `3.0.1` + Binaries `3.0.1` 的运行兼容。
 - 对 WATERMeDIA `3.0.0.23` 仍仅提供初版兼容，未来可能移除。
+
+[0.2.1]: https://github.com/AnnoyingVillager/onescreen/releases/tag/v0.2.1
 
 [0.2.0]: https://github.com/AnnoyingVillager/onescreen/releases/tag/v0.2.0
 

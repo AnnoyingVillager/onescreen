@@ -3,8 +3,8 @@
 ## 当前版本状态
 
 - 最新公开版本：`0.2.0`。
-- 当前源码版本：`0.2.0`，对应 GitHub Release 标签 `v0.2.0`。
-- 发布标签格式：`v<version>`，例如 `v0.2.0`。
+- 当前源码版本：`0.2.1`，尚未创建 `v0.2.1` 标签或 Release。
+- 发布标签格式：`v<version>`，例如下一次发布可使用 `v0.2.1`。
 - 标签版本必须与 `gradle.properties` 中的 `version` 完全一致。
 
 发布前同步修改或确认：
@@ -38,8 +38,8 @@ build/libs/onescreen-<version>.sha256
 最后一个文件由发布流水线生成；本地可使用 PowerShell 手动核对 JAR 和 sources JAR：
 
 ```powershell
-Get-FileHash 'build\libs\onescreen-0.2.0.jar' -Algorithm SHA256
-Get-FileHash 'build\libs\onescreen-0.2.0-sources.jar' -Algorithm SHA256
+Get-FileHash 'build\libs\onescreen-0.2.1.jar' -Algorithm SHA256
+Get-FileHash 'build\libs\onescreen-0.2.1-sources.jar' -Algorithm SHA256
 ```
 
 检查 JAR 内至少包含：
@@ -82,9 +82,9 @@ Get-FileHash 'build\libs\onescreen-0.2.0-sources.jar' -Algorithm SHA256
 只有用户明确要求发布后才执行：
 
 ```powershell
-git tag -a v0.2.0 -m 'OneScreen 0.2.0'
+git tag -a v0.2.1 -m 'OneScreen 0.2.1'
 git push origin main
-git push origin v0.2.0
+git push origin v0.2.1
 ```
 
 推送标签会触发 `.github/workflows/release.yml`。如果标签与项目版本不一致，流水线必须失败，不创建 Release。

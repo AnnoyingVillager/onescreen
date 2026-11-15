@@ -46,6 +46,13 @@ OneScreen 0.2 使用：
 
 单个客户端最多同时保留 8 个活动会话；超出后延迟重试，避免无限创建解码器。
 
+### MRL 缓存生命周期
+
+- WATERMeDIA 会按 URL 缓存 MRL；即使 OneScreen 因 `loadRevision` 变化新建了 `MediaSession`，再次解析同一 URL 仍可能得到旧对象。
+- `WaterMediaCompat.mrl()` 在拿到缓存对象后检查状态；`ERROR`、`BLOCKED`、`EXPIRED`、`FORGOTTEN` 会通过反射调用 `reload()` 并替换内部 handle。
+- `FETCHING` 不主动重载，避免正常解析过程被重复请求打断。
+- 典型恢复路径：HTTP 服务离线导致 `ERROR (ConnectException)` -> 启动服务 -> 点击编辑器 `↻` -> 新会话重新解析 URL -> `PLAYING`。
+
 ## 4. 图片路径
 
 图片使用 WATERMeDIA Headless 引擎输出首帧：

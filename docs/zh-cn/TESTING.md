@@ -44,6 +44,10 @@ gradlew runGameTestServer
 - [ ] 模型、纹理、语言、loot table 无缺失。
 
 - [x] 屏幕画框显示在专属 OneScreen 创意栏，且未注入原版建筑方块栏。
+- [x] Vulkan 下可在橡木楼梯表面放置屏幕画框。
+- [x] Vulkan 下可在橡木栅栏表面放置屏幕画框。
+- [x] 移除画框原本贴附的楼梯或栅栏后，画框保持悬空且 F3 仍识别为 `onescreen:screen`。
+- [x] 移除承托方块后画框不自动掉落；画框贴附方向保持原 `FACING`。
 
 ### 数据保存
 
@@ -107,6 +111,7 @@ gradlew runGameTestServer
 - [x] 点击暂停后退出编辑器，媒体保持 `PAUSED`，不会随游戏菜单关闭而恢复播放。
 - [x] 手动刷新由服务端递增 `loadRevision`，客户端关闭旧会话并重建同一 URL。
 - [x] 刷新后点击播放可从 `LOADING` 进入 `PLAYING`。
+- [x] HTTP 服务离线时进入 `ERROR (ConnectException)`；恢复服务后点击右键菜单 `↻`，新会话重新解析 URL 并进入 `PLAYING`。
 - [x] `-180°` 到 `180°` 数值可保存；旧存档缺少字段时回退到 `0°`。
 - [x] 旋转后媒体四边形、九宫格偏移和声音距离中心使用一致几何。
 - [x] 水平与上下朝向使用同一旋转平面。
@@ -287,6 +292,7 @@ Select-String -Path 'run\logs\latest.log' -Pattern 'Media texture ready|Video de
 - [x] `onescreen.client.mixins.json` 被加载，3 个 Vulkan 队列同步 Mixin 全部注入。
 - [x] `http://localhost/1080p.mp4` 输出 `1920x1080`，`format=GPU`，`hardwareAccel=true`。
 - [x] `http://localhost/4k.mp4` 输出 `3840x2160`，`format=GPU`；WATERMeDIA 对 AV1 10-bit 片源选择软解。
+- [x] 失败 MRL 恢复回归：同一 `4k.mp4` 屏幕在 HTTP 恢复后经右键 `↻` 进入 `PLAYING`，日志确认 `3840x2160`、`format=GPU`、`backend=Vulkan`。
 - [x] 4K 连续播放超过 1 分钟，无 `Retention wait failed`、`VK_ERROR_DEVICE_LOST` 或 `GpuDeviceLossException`。
 - [x] 修复后没有生成新 crash report。
 - [x] 在 1080p 与 4K 间切换、关闭旧会话并重建新会话正常。

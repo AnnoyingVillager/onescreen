@@ -25,10 +25,10 @@ Linux/macOS can use `./gradlew build --no-configuration-cache`.
 
 Build outputs:
 
-- `build/libs/onescreen-0.2.0.jar`: mod JAR.
-- `build/libs/onescreen-0.2.0-sources.jar`: sources JAR.
+- `build/libs/onescreen-0.2.1.jar`: mod JAR.
+- `build/libs/onescreen-0.2.1-sources.jar`: sources JAR.
 
-The current public release is `0.2.0`. Check the actual version in `gradle.properties` before building.
+The latest public release is `0.2.0`; the current source version is `0.2.1`, and no `v0.2.1` release has been created. Check the actual version in `gradle.properties` before building.
 
 ## Local run
 

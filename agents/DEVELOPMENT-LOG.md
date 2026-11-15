@@ -96,10 +96,31 @@ GpuDeviceLossException: VK_ERROR_DEVICE_LOST
 - 所有本地命令示例统一使用 PowerShell；Agent 文档明确只允许工作区内沙箱客户端，禁止 PCL2 和宿主机客户端。
 - 人类文档进一步拆分为 `docs/zh-cn/` 与 `docs/en/`；英文 README、英文 Changelog 和全部英文开发文档已补齐，内部链接按语言树分别维护。
 
+## 2026-11-15：画框无承托放置
+
+- `ScreenBlock.getStateForPlacement()` 改为只使用 `BlockPlaceContext.getClickedFace()`；不再通过 `isFaceSturdy` 限制完整方块。
+- 删除 `canSurvive` 和读取承托邻居的 `updateShape` 自毁逻辑。画框不保存承托方块坐标，原贴附方块被破坏后保持悬空。
+- `.\gradlew.bat build --offline --no-daemon --no-configuration-cache` 通过。
+- Vulkan 1.4.329 沙箱实机验证：可在橡木楼梯、橡木栅栏的可点击表面放置 `onescreen:screen`。
+- 实机验证：移除原本贴附的楼梯或栅栏后，F3 仍识别同一 `onescreen:screen` 方块，画框不自动掉落，`FACING` 保持不变。
+- 本次测试没有新增 crash report；日志中的媒体连接失败来自测试世界中此前保存但本地 HTTP 服务未启动的 URL，与本方块改动无关。
+
+## 2026-11-15：WATERMeDIA 失败 MRL 缓存恢复
+
+- 稳定复现：关闭 IIS 本地站点后进入游戏，在同一屏幕输入 `http://localhost/4k.mp4`；媒体进入 `ERROR`。随后启动站点并点击右键编辑器 `↻`，旧实现仍无法恢复。
+- 根因：WATERMeDIA 按 URL 缓存 MRL。HTTP 离线阶段生成的失败对象会一直留在缓存中；OneScreen 虽然递增 `loadRevision` 并重建 `MediaSession`，再次调用 `mrl(url)` 仍得到同一个 `ERROR` 对象。
+- 修复：`WaterMediaCompat.mrl()` 构造 `MediaResource` 后调用 `reloadIfRegenerable()`；对 `ERROR/BLOCKED/EXPIRED/FORGOTTEN` 反射调用 WATERMeDIA `reload()` 并替换 handle，`FETCHING` 保持不打断。
+- 反射仍全部限定在 `WaterMediaCompat`，没有扩散到业务层或渲染层。
+- 构建：`gradlew.bat build --offline --no-daemon --no-configuration-cache` 通过。
+- 首次恢复回归（2026-11-15 17:26:21）：HTTP 恢复后，同一 `619, -32, 602` 屏幕经右键 `↻` 与关闭编辑器触发新会话，依次进入 `WAITING -> LOADING -> PLAYING`。
+- 单独按钮回归（2026-11-15 17:33）：在视频播放中点击右键菜单 `↻`，随后点击 `Cancel`（不保存设置）；客户端在关闭编辑器后关闭旧会话并重建，于 17:33:57 再次进入 `PLAYING`，证明恢复不依赖设置保存。
+- 实机纹理日志：`Media texture ready ... (3840x2160, format=GPU, backend=Vulkan)`；画面恢复正常，证明失败缓存已被刷新。
+- `Media source exceeds cache limit` 对约 1.93 GB 的测试文件是预期缓存旁路，之后 FFmpeg 可直接流式打开，不是本次失败根因。
+
 ## 当前 Git 状态
 
-- `v0.2.0` 发布提交位于 `main`；历史基线 `v0.1.2` 为 `c0c2660`。
-- 0.2 源码与文档通过 `v0.2.0` 发布提交进入 `main`。
+- 最近公开 Release 为 `v0.2.0`；历史基线 `v0.1.2` 为 `c0c2660`。
+- 当前源码版本升级为 `0.2.1`，位于 `main`；尚未创建 `v0.2.1` 标签或 Release。
 - 本地仍可能存在 `.codex-*` 临时文件、`config/` 和运行目录；这些内容不进入提交。
 - 未获用户明确要求，不要自行提交、推送、打标签或发布。
 

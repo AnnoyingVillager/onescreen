@@ -7,13 +7,13 @@ OneScreen 是一个面向 **Minecraft Java Edition 26.2 / Fabric** 的屏幕模�
 > [!IMPORTANT]
 > **本项目是一个由生成式 AI 主导完成的项目。** 它不是 Mojang、Fabric、WATERMeDIA 或其作者的官方项目，也不是由成熟商业团队维护的产品。代码、文档、构建配置和排错记录主要由生成式 AI 生成与整理，人类用户提供需求、运行环境和实机反馈。使用前请备份世界；建议先在测试世界中验证。
 
-> 当前状态：最新公开版本为 `0.2.0`，加入 FHD/4K 源尺寸支持、WATERMeDIA GPU 纹理直通和 Vulkan 共享队列同步。
+> 当前状态：当前源码版本为 `0.2.1`，最近公开 Release 为 `0.2.0`。`0.2.1` 修复画框对不完整方块的贴附与悬空行为，并修复 WATERMeDIA 失败 MRL 缓存导致媒体无法刷新恢复的问题。
 
 > 下载：[GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · 源码与问题反馈：[GitHub 仓库](https://github.com/AnnoyingVillager/onescreen)
 
 ## 功能概览
 
-- 1×1×1/16 的薄型屏幕画框，可贴附在任意方块的六个表面。
+- 1×1×1/16 的薄型屏幕画框，可贴附在任意方块的六个表面，包括楼梯、栅栏等不完整方块；画框不依赖承托方块，承托方块被破坏后仍保持悬空。
 - 点击画框打开设置界面，可配置 URL、画面尺寸、渲染距离、声音传播距离、九宫格相对位置、平面旋转角度、隐藏画框材质、循环播放和直播追帧。
 - 支持 PNG、JPEG、WebP 图片，以及 MP4、HLS/M3U8 等 WATERMeDIA 支持的媒体；多频道 IPTV 列表目前只播放第一个频道。
 - 支持画面适应、拉伸、平铺、填充和居中五种比例模式；支持音量、静音、循环、暂停、停止、手动刷新和调试材质。

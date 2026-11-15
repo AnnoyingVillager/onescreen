@@ -7,7 +7,7 @@ OneScreen provides a thin screen that can be attached to any block surface in Mi
 ## Current user flow
 
 1. Obtain the 1x1x1/16 screen frame from the `OneScreen` creative tab.
-2. Attach it to one of the six surfaces of a block.
+2. Attach it to one of the six surfaces of any block; non-full shapes such as stairs and fences are valid placement targets.
 3. Right-click the frame to open the editor, or let an administrator configure it with `/screen`.
 4. The server validates and stores the URL, size, distances, alignment, fit mode, and related settings.
 5. Clients receive the block-entity update, create a media session asynchronously, and render the result.
@@ -17,8 +17,8 @@ OneScreen provides a thin screen that can be attached to any block surface in Mi
 
 ### Blocks and rendering
 
-- Six-direction thin frame for horizontal, upward, and downward surfaces.
-- Minable and drop-producing block with a dedicated creative tab, model, collision, textures, and loot table.
+- Six-direction thin frame for horizontal, upward, and downward surfaces, including full and non-full blocks. `FACING` records only the mounting direction and does not store a support block.
+- Minable and drop-producing block with a dedicated creative tab, model, collision, textures, and loot table. Removing its former support block does not break or drop the frame.
 - Transparent display area when there is no media and debug mode is off; debug mode shows placeholder material.
 - Optional hidden frame model while dynamic media and right-click interaction remain.
 - In-plane rotation from `-180°` through `180°`.

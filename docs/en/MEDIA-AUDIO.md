@@ -46,6 +46,13 @@ This supports different WATERMeDIA package layouts and prevents reflection from 
 
 A single client retains at most eight active sessions; additional screens retry later to avoid unlimited decoder creation.
 
+### MRL cache lifecycle
+
+- WATERMeDIA caches MRLs by URL. A new `MediaSession` caused by a `loadRevision` change may still receive the same old object when the URL is resolved again.
+- After obtaining the cached object, `WaterMediaCompat.mrl()` checks its status. `ERROR`, `BLOCKED`, `EXPIRED`, and `FORGOTTEN` resources call `reload()` reflectively and replace the internal handle.
+- `FETCHING` is not reloaded, so a valid in-flight resolution is not interrupted by duplicate requests.
+- Typical recovery: an offline HTTP server causes `ERROR (ConnectException)`; start the server, click the editor `↻`, and the new session resolves to `PLAYING`.
+
 ## 4. Image path
 
 Images use the WATERMeDIA headless engine to produce the first frame:

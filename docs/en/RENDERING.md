@@ -76,6 +76,11 @@ The screen supports six directions:
 
 The current surface offset is `SURFACE_OFFSET = 0.4365`. Up/down faces cannot reuse horizontal UV ordering; historical bugs included wide-face textures on the wrong side of the block, reversed up/down UVs, and missing narrow-edge textures. Every six-direction change requires separate in-game verification.
 
+## Placement and support independence
+
+`ScreenBlock.getStateForPlacement()` uses only `BlockPlaceContext.getClickedFace()` to set `FACING`. It does not call `isFaceSturdy` and does not require a full cube. Visible, clickable surfaces of stairs, slabs, fences, walls, and other non-full blocks are therefore valid placement targets for the thin frame.
+
+The screen does not store a support-block position, and it has no `canSurvive` or neighbor-update self-destruction rule. Removing the block it was originally placed against only causes a normal neighbor update; the frame remains suspended. The loot table runs only when the frame itself is broken. `FACING` continues to select one of the six model, media, and interaction orientations.
 ## Alignment offsets
 
 `ScreenAlignment` provides:
@@ -130,7 +135,7 @@ Rotation ranges from `-180°` through `180°` and covers every angle within the 
 - The media quad follows the basis.
 - Alignment offsets follow the basis.
 - The audio center uses the same geometry.
-- `FACING` still determines the attached block face.
+- `FACING` still determines the mounting orientation of the model, media quad, and interaction area.
 
 ## Texture sources
 

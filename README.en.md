@@ -7,7 +7,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 > [!IMPORTANT]
 > **This project is primarily developed with generative AI.** It is not an official Mojang, Fabric, or WATERMeDIA project and is not maintained by a mature commercial team. Code, documentation, build configuration, and troubleshooting notes are largely generated and organized by AI, while the human user provides requirements, testing environments, and in-game feedback. Back up your worlds and test new versions in a separate world first.
 
-> Current status: the latest public release is `0.2.0`, adding native-size FHD/4K support, WATERMeDIA GPU texture integration, and Vulkan queue synchronization.
+> Current status: the source version is `0.2.1`; the latest public release is `0.2.0`. Version `0.2.1` fixes frame placement and suspension on non-full blocks and recovers media when WATERMeDIA has cached a failed MRL.
 
 > Download: [GitHub Releases](https://github.com/AnnoyingVillager/onescreen/releases) · Source and issue tracker: [GitHub repository](https://github.com/AnnoyingVillager/onescreen)
 
@@ -16,7 +16,7 @@ OneScreen is a screen mod for **Minecraft Java Edition 26.2 / Fabric**. It adds 
 
 ## Features
 
-- A thin `1×1×1/16` screen frame that can be attached to any of the six faces of a block.
+- A thin `1×1×1/16` screen frame that can be attached to any of the six faces of a block, including non-full shapes such as stairs and fences. The frame does not depend on its support block and remains suspended if that block is removed.
 - Right-click the frame to open an editor for the media URL, width, height, render distance, audio distance, nine-grid alignment, in-plane rotation, frame visibility, looping, and live-stream refresh.
 - PNG, JPEG, and WebP images, plus MP4, HLS/M3U8, and other media supported by WATERMeDIA. Multi-channel IPTV playlists currently play only the first channel.
 - Five aspect-ratio modes: Fit, Stretch, Tile, Fill, and Center.

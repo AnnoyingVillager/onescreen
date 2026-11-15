@@ -116,7 +116,7 @@ The 26.2 target does not expose the old `getRenderBoundingBox` override used by 
 - The model, media quad, and narrow-edge textures must occupy the same thin surface.
 - Up/down wide-face UVs use different basis vectors from horizontal faces and require separate regression tests.
 - `hideFrame` hides only the static block model; the BlockEntityRenderer media quad and interaction area remain.
-- Rotation affects only the screen plane and does not change the attached block face.
+- Rotation affects only the screen plane and does not change the frame mounting orientation.
 
 ## Client networking and editor
 

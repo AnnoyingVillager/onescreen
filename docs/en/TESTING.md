@@ -43,6 +43,10 @@ If unit tests or GameTests are added before release, also run:
 - [ ] World reload restores the block.
 - [ ] Model, texture, language, and loot table are present.
 - [x] The screen frame appears in the dedicated OneScreen creative tab and is not injected into the vanilla building-blocks tab.
+- [x] A screen frame can be placed on an oak-stairs surface under Vulkan.
+- [x] A screen frame can be placed on an oak-fence surface under Vulkan.
+- [x] Removing the stair or fence it was originally placed against leaves the frame suspended and still identified as `onescreen:screen` by F3.
+- [x] Removing the support block does not drop or self-destruct the frame; its original `FACING` remains unchanged.
 
 ### Persistence
 
@@ -106,6 +110,7 @@ If unit tests or GameTests are added before release, also run:
 - [x] Manual pause survives closing the editor and does not resume when the game menu closes.
 - [x] Refresh increments server `loadRevision`; the client closes the old session and rebuilds the same URL.
 - [x] Play after refresh transitions from `LOADING` to `PLAYING`.
+- [x] With HTTP offline, playback reaches `ERROR (ConnectException)`; after restarting the server, the editor `↻` resolves the URL in a new session and reaches `PLAYING`.
 - [x] Rotation values from `-180°` through `180°` persist; old saves default to `0°`.
 - [x] Rotated media, alignment, and audio center share the same geometry.
 - [x] Horizontal and up/down directions use the same rotation plane.
@@ -286,6 +291,7 @@ Results:
 - [x] `onescreen.client.mixins.json` loaded and all three Vulkan queue-sync Mixins injected.
 - [x] `http://localhost/1080p.mp4` output `1920x1080`, `format=GPU`, `hardwareAccel=true`.
 - [x] `http://localhost/4k.mp4` output `3840x2160`, `format=GPU`; WATERMeDIA selected software decoding for the AV1 10-bit source.
+- [x] Failed-MRL recovery regression: after HTTP returned, the same `4k.mp4` screen reached `PLAYING` through the editor `↻`; logs confirmed `3840x2160`, `format=GPU`, and `backend=Vulkan`.
 - [x] Continuous 4K playback exceeded one minute without `Retention wait failed`, `VK_ERROR_DEVICE_LOST`, or `GpuDeviceLossException`.
 - [x] No new crash report was generated after the fix.
 - [x] Switching between 1080p and 4K, closing the old session, and creating a new one worked.

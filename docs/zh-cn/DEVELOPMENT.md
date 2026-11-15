@@ -25,10 +25,10 @@ Linux/macOS 可使用 `./gradlew build --no-configuration-cache`。
 
 构建输出：
 
-- `build/libs/onescreen-0.2.0.jar`：模组 JAR。
-- `build/libs/onescreen-0.2.0-sources.jar`：源码包。
+- `build/libs/onescreen-0.2.1.jar`：模组 JAR。
+- `build/libs/onescreen-0.2.1-sources.jar`：源码包。
 
-当前公开最新版本仍为 `0.1.2`；源码版本已进入 `0.2.0` 开发阶段。构建前先查看 `gradle.properties` 中的实际版本。
+最近公开 Release 为 `0.2.0`；当前源码版本为 `0.2.1`，尚未创建 `v0.2.1` Release。构建前先查看 `gradle.properties` 中的实际版本。
 
 ## 本地运行
 

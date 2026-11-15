@@ -2,7 +2,15 @@
 
 This project follows semantic versioning. Release dates use the local `YYYY-MM-DD` format.
 
-## [Unreleased]
+## [0.2.1] - 2026-11-15
+
+### Fixes
+
+- Screen frames no longer require a full, sturdy support block and can be placed on clickable non-full surfaces such as stairs and fences.
+- Frames no longer store or validate a support block. Removing the block they were originally placed against leaves them suspended instead of self-destructing or dropping.
+- Fixed WATERMeDIA caching a failed MRL by URL while the local HTTP service was offline. After the service returns, the `↻` button in the right-click editor now regenerates the resource and restores playback.
+- In-game verification confirmed the recovered 4K video reached `PLAYING` at `3840x2160`, `format=GPU`, on the Vulkan backend.
+
 
 ### Documentation
 
@@ -40,6 +48,10 @@ Playback-control and icon fixes.
 
 - Preserved runtime compatibility with WATERMeDIA `3.0.0.23` + Binaries `3.0.0.6` and WATERMeDIA `3.0.1` + Binaries `3.0.1`.
 - WATERMeDIA `3.0.0.23` remains initial best-effort compatibility and may be removed later.
+
+[0.2.1]: https://github.com/AnnoyingVillager/onescreen/releases/tag/v0.2.1
+
+[0.2.0]: https://github.com/AnnoyingVillager/onescreen/releases/tag/v0.2.0
 
 [0.1.2]: https://github.com/AnnoyingVillager/onescreen/releases/tag/v0.1.2
 

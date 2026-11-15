@@ -76,6 +76,12 @@ BlockEntityRenderer<ScreenBlockEntity, ScreenRenderState>
 
 当前表面偏移常量为 `SURFACE_OFFSET = 0.4365`。`UP`/`DOWN` 不能复用水平面的 UV 顺序；历史上曾出现宽面贴图落在同方块另一侧、上下方向 UV 反向和窄边缺失的问题，六向修改后必须分别实机检查。
 
+## 放置与悬空
+
+`ScreenBlock.getStateForPlacement()` 只使用 `BlockPlaceContext.getClickedFace()` 设置 `FACING`，不调用 `isFaceSturdy`，也不要求目标方块为完整方块。因此楼梯、台阶、栅栏、墙等具有可点击外形的方块表面都可以放置薄画框。
+
+画框不保存承托方块坐标，也没有 `canSurvive` 或邻居更新自毁逻辑。破坏原本贴附的方块只会触发普通相邻更新，画框继续保持悬空；只有直接破坏画框本身时才会执行方块破坏和 loot table 掉落。`FACING` 继续决定模型、媒体面和交互面所在的六个朝向之一。
+
 ## 九宫格偏移
 
 `ScreenAlignment` 提供：
@@ -130,7 +136,7 @@ bottom_left, down, bottom_right
 - 媒体四边形跟随基向量旋转。
 - 九宫格偏移跟随基向量旋转。
 - 声音中心使用同一几何计算。
-- `FACING` 仍决定方块贴附面。
+- `FACING` 仍决定模型、媒体面和交互面的放置朝向。
 
 ## 纹理来源
 

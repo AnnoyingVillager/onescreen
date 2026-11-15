@@ -43,7 +43,7 @@ public final class WaterMediaCompat {
 
 	static MediaResource mrl(final String url) {
 		Reflective implementation = implementation();
-		return new MediaResource(invoke(implementation.mrlFactory(), null, url));
+		return new MediaResource(invoke(implementation.mrlFactory(), null, url)).reloadIfRegenerable();
 	}
 
 	static MediaEngine headlessEngine() {
@@ -211,20 +211,39 @@ public final class WaterMediaCompat {
 	}
 
 	static final class MediaResource {
-		private final Object handle;
+		private Object handle;
 		private final Method statusMethod;
 		private final @Nullable Method exceptionMethod;
 		private final Method sourceMethod;
+		private final @Nullable Method reloadMethod;
 
 		private MediaResource(final Object handle) {
 			this.handle = handle;
 			this.statusMethod = method(handle.getClass(), "status");
 			this.exceptionMethod = optionalMethod(handle.getClass(), "exception");
 			this.sourceMethod = method(handle.getClass(), "source", int.class);
+			this.reloadMethod = optionalMethod(handle.getClass(), "reload");
 		}
 
 		Object handle() {
 			return this.handle;
+		}
+
+		MediaResource reloadIfRegenerable() {
+			if (this.reloadMethod == null) {
+				return this;
+			}
+			switch (this.status()) {
+				case "ERROR", "BLOCKED", "EXPIRED", "FORGOTTEN" -> {
+					Object refreshed = invoke(this.reloadMethod, this.handle);
+					if (refreshed != null) {
+						this.handle = refreshed;
+					}
+				}
+				default -> {
+				}
+			}
+			return this;
 		}
 
 		String status() {

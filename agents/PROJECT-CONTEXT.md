@@ -2,7 +2,7 @@
 
 ## 产品定义
 
-OneScreen 是 Minecraft Java Edition 26.2 / Fabric 的薄型屏幕模组。玩家把 1x1x1/16 的屏幕画框贴在任意方块表面，通过右键编辑器或 `/screen` 命令配置媒体 URL、尺寸、距离、九宫格位置、比例模式、旋转、循环、直播追帧和画框可见性。
+OneScreen 是 Minecraft Java Edition 26.2 / Fabric 的薄型屏幕模组。玩家把 1x1x1/16 的屏幕画框贴在任意方块的可点击表面（包括楼梯、栅栏等不完整方块），画框不依赖承托方块，原贴附方块被破坏后仍可悬空，通过右键编辑器或 `/screen` 命令配置媒体 URL、尺寸、距离、九宫格位置、比例模式、旋转、循环、直播追帧和画框可见性。
 
 项目由生成式 AI 主导实现，人类用户提供需求、运行环境与实机反馈。对外文档必须明确这一点，不能把它描述为 Mojang、Fabric 或 WATERMeDIA 官方项目。
 
@@ -16,7 +16,7 @@ OneScreen 是 Minecraft Java Edition 26.2 / Fabric 的薄型屏幕模组。玩�
 | Fabric API | `0.152.0+26.2` |
 | Gradle | `9.8.2` |
 | Loom | `1.19.4` |
-| OneScreen 源码版本 | `0.2.0`（未发布） |
+| OneScreen 源码版本 | `0.2.1`（未发布） |
 | WATERMeDIA | `3.0.0` |
 | WATERMeDIA Binaries | `3.0.0` |
 
@@ -40,7 +40,7 @@ WATERMeDIA 的版本语义与普通四段版本号不同：
 
 服务端和公共逻辑：
 
-- `block/ScreenBlock.java`：六向薄画框、点击交互、blockstate。
+- `block/ScreenBlock.java`：六向薄画框、点击交互、blockstate；放置只读取点击面，不保存或校验承托方块。
 - `block/ScreenBlockEntity.java`：屏幕权威配置、持久化、更新包、reload revision。
 - `screen/ScreenSettings.java`：URL、尺寸、距离、对齐、适配、旋转、循环等纯数据。
 - `screen/ScreenGeometry.java`、`ScreenFitGeometry.java`：六向平面几何、旋转与 UV 映射。
@@ -81,7 +81,7 @@ URL 只允许 HTTP/HTTPS，长度上限为 4096。不要信任客户端 URL，�
 
 ## 渲染原理
 
-- 屏幕方块使用六向 `FACING`。
+- 屏幕方块使用六向 `FACING`，但没有 `canSurvive` 或承托邻居自毁逻辑；任意可点击方块表面均可放置，承托方块被破坏后画框继续悬空。
 - 模型与动态媒体四边形位于同一薄面。
 - `ScreenGeometry` 统一计算平面内旋转、媒体面基向量、九宫格偏移和声音中心。
 - `ScreenFitMode` 支持 `fit/stretch/tile/fill/center`；平铺模式 UV 可超过 1。
@@ -154,6 +154,7 @@ Minecraft VulkanDevice
 - 停止：释放媒体纹理，屏幕不再显示残留帧。
 - 暂停：手动暂停覆盖状态在关闭编辑器后继续生效。
 - 刷新：服务端递增 `loadRevision`，客户端重建会话。
+- WATERMeDIA 会按 URL 缓存 MRL。`WaterMediaCompat.mrl()` 必须对 `ERROR/BLOCKED/EXPIRED/FORGOTTEN` 资源调用 `reloadIfRegenerable()`；否则“服务先离线、后恢复”时，右键刷新仍会复用同一个失败对象。
 - 旋转：`-180..180`，画面、九宫格和声音中心共用几何。
 - 隐藏画框：默认关闭，不影响点击区域。
 
@@ -182,6 +183,7 @@ Minecraft VulkanDevice
 - 不要让 `MediaSession` 在渲染线程创建播放器或执行网络请求。
 - 不要把远程 URL 不加校验同步给客户端。
 - 不要逐帧记录尺寸、LOD 或错误日志。
+- 不要假设新建 `MediaSession` 就能绕过 WATERMeDIA 的 URL 级 MRL 缓存；失败资源必须通过兼容层刷新。
 - 不要依赖已删除的 Agent 文档路径；长期 Agent 文档只在 `agents/`。
 
 ## 人类文档索引
